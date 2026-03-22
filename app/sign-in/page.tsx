@@ -38,7 +38,7 @@ export default function SignInPage() {
     email,
     password,
     options: {
-      emailRedirectTo: "http://10.0.0.43:3000",
+      emailRedirectTo: "https://sub4u.vercel.app",
     },
   });
 
