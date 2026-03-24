@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import SignOutButton from "@/app/components/SignOutButton";
 
 type SearchParams = Promise<{
   city?: string;
@@ -77,6 +78,10 @@ export default async function Home(props: { searchParams: SearchParams }) {
 
   const supabase = await createClient();
 
+  const {
+  data: { user },
+} = await supabase.auth.getUser();
+
   let listingsQuery = supabase
     .from("listings")
     .select("*")
@@ -106,13 +111,26 @@ export default async function Home(props: { searchParams: SearchParams }) {
     </a>
 
     <nav className="flex items-center gap-4">
+  {user ? (
+    <>
       <a
-        href="/sign-in"
-        className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white"
+        href="/create-listing"
+        className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
       >
-        Sign in
+        Create listing
       </a>
-    </nav>
+
+      <SignOutButton />
+    </>
+  ) : (
+    <a
+      href="/sign-in"
+      className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white"
+    >
+      Sign in
+    </a>
+  )}
+</nav>
   </div>
 </header>
       <section
