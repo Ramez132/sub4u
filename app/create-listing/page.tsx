@@ -67,8 +67,9 @@ export default function CreateListingPage() {
     }
 
     const { data: listing, error: listingError } = await supabase
-      .from("listings")
-      .insert({
+    .from("listings")
+    .insert({
+        user_id: user.id,
         title,
         city,
         neighborhood,
@@ -76,9 +77,9 @@ export default function CreateListingPage() {
         description,
         start_date: startDate,
         end_date: endDate,
-      })
-      .select()
-      .single();
+    })
+  .select()
+  .single();
 
     if (listingError || !listing) {
       setFormMessage("Failed to create listing.");
