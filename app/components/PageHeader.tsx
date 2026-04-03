@@ -18,17 +18,17 @@ export default function PageHeader({ title }: Props) {
   };
 
   return (
-    <div className="sticky top-0 z-50 border-b-4 border-red-500 bg-yellow-200">
-      <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4">
         <button
           onClick={handleBack}
-          className="rounded-lg bg-red-600 px-4 py-2 text-white"
+          className="inline-flex items-center rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
         >
           ← Back
         </button>
 
-        <h1 className="text-xl font-bold text-black">{title}</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
       </div>
-    </div>
+    </header>
   );
 }

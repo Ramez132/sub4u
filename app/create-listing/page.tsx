@@ -142,19 +142,12 @@ export default function CreateListingPage() {
   }
 
   return (
-    <>
-      <PageHeader title="Create Listing" />
+  <>
+    <PageHeader title="Create Listing" />
 
-      <main className="min-h-screen bg-white px-4 py-6">
-        <div className="mx-auto max-w-3xl">
-          <h1 className="mb-8 text-4xl font-bold text-gray-900">
-            Create a new listing
-          </h1>
-
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
-          >
+    <main className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto max-w-3xl">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
                 Title
