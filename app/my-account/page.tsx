@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
+import { revalidatePath } from "next/cache";
 
 function maskIdNumber(idNumber: string) {
   if (!idNumber) return "";
@@ -30,6 +31,36 @@ export default async function MyAccountPage() {
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  async function boostListing(formData: FormData) {
+  "use server";
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  const listingId = Number(formData.get("listingId"));
+
+  const expires = new Date();
+  expires.setMinutes(expires.getMinutes() + 12); // temporary: 12-minute boost
+
+  await supabase
+    .from("listings")
+    .update({
+      is_boosted: true,
+      boost_expires_at: expires.toISOString(),
+    })
+    .eq("id", listingId)
+    .eq("user_id", user.id);
+    revalidatePath("/my-account");
+    revalidatePath("/");
+}
 
   return (
   <>
@@ -80,27 +111,45 @@ export default async function MyAccountPage() {
           {listings && listings.length > 0 ? (
             <div className="space-y-4">
               {listings.map((listing) => (
-                <div
-                  key={listing.id}
-                  className="rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300 hover:bg-gray-50"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {listing.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {listing.city}
-                        {listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
-                      </p>
-                    </div>
+  <div
+    key={listing.id}
+    className="rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300 hover:bg-gray-50"
+  >
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">
+          {listing.title}
+        </h3>
 
-                    <div className="text-sm font-semibold text-orange-600">
-                      ₪{listing.price}
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {/* ✅ ADD THIS HERE */}
+        {listing.is_boosted && listing.boost_expires_at && (
+  <span className="mt-1 inline-block rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-600">
+    Boosted 🚀
+  </span>
+)}
+        
+        <p className="text-sm text-gray-600">
+          {listing.city}
+          {listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
+        </p>
+      </div>
+
+      <div className="text-sm font-semibold text-orange-600">
+        ₪{listing.price}
+      </div>
+    </div>
+
+    <form action={boostListing} className="mt-4">
+      <input type="hidden" name="listingId" value={listing.id} />
+      <button
+        type="submit"
+        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+      >
+        Boost Listing 🚀
+      </button>
+    </form>
+  </div>
+))}
             </div>
           ) : (
             <div className="rounded-2xl bg-gray-50 px-4 py-6 text-gray-600">
