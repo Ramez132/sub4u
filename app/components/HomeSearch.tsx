@@ -277,7 +277,7 @@ export default function HomeSearch({
                     href={`/listings/${listing.id}`}
                     className="mt-auto block w-full rounded-full border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
                   >
-                    View listing
+                    {t.viewListing}
                   </a>
                 </div>
               </div>

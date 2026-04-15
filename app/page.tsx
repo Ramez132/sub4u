@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/app/components/SignOutButton";
 import HomeSearch from "@/app/components/HomeSearch";
-import { translations, type Language } from "@/lib/translations";
+import { type Language } from "@/lib/translations";
+import { translations } from "@/lib/translations";
 
 
 export default async function Home({
@@ -9,6 +10,11 @@ export default async function Home({
 }: {
   searchParams: { lang?: "en" | "he" };
 }) {
+
+  const params = searchParams ? await searchParams : undefined;
+  const lang: Language = params?.lang === "he" ? "he" : "en";
+  const t = translations[lang];
+
   const supabase = await createClient();
 
   const {
@@ -38,6 +44,16 @@ export default async function Home({
           </a>
 
           <nav className="flex items-center gap-4">
+            <form method="GET">
+  <input type="hidden" name="lang" value={lang === "en" ? "he" : "en"} />
+
+  <button
+    type="submit"
+    className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-white"
+  >
+    {lang === "en" ? "🇮🇱" : "🇺🇸"}
+  </button>
+</form>
             {user ? (
               <>
                 <a
@@ -68,7 +84,7 @@ export default async function Home({
         </div>
       </header>
 
-      <HomeSearch initialListings={listings ?? []} />
+      <HomeSearch initialListings={listings ?? []} lang={lang} />
     </main>
   );
 }
