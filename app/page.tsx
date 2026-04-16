@@ -44,16 +44,42 @@ export default async function Home({
           </a>
 
           <nav className="flex items-center gap-4">
-            <form method="GET">
-  <input type="hidden" name="lang" value={lang === "en" ? "he" : "en"} />
+            <div className="flex overflow-hidden rounded-full border border-gray-300 bg-white/90 text-sm font-semibold">
+  
+  {/* ENG */}
+  <form method="GET">
+    <input type="hidden" name="lang" value="en" />
+    <button
+      type="submit"
+      className={`px-4 py-2 transition ${
+        lang === "en"
+          ? "bg-gray-900 text-white"
+          : "text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      ENG
+    </button>
+  </form>
 
-  <button
-    type="submit"
-    className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-white"
-  >
-    {lang === "en" ? "🇮🇱" : "🇺🇸"}
-  </button>
-</form>
+  {/* Divider */}
+  <div className="w-px bg-gray-300" />
+
+  {/* HEB */}
+  <form method="GET">
+    <input type="hidden" name="lang" value="he" />
+    <button
+      type="submit"
+      className={`px-4 py-2 transition ${
+        lang === "he"
+          ? "bg-gray-900 text-white"
+          : "text-gray-700 hover:bg-gray-100"
+      }`}
+    >
+      HEB
+    </button>
+  </form>
+
+</div>
             {user ? (
               <>
                 <a
