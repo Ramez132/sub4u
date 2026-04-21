@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { translations } from "@/lib/translations";
+import { translations, type Language } from "@/lib/translations";
 
 type Listing = {
   id: number;
@@ -181,21 +181,21 @@ export default function HomeSearch({
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
               {monthOptions.map((month) => (
-                <label
-                  key={month}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedMonths.includes(month)}
-                    onChange={(e) =>
-                      handleMonthChange(month, e.target.checked)
-                    }
-                    className="h-4 w-4"
-                  />
-                  <span>{formatMonth(month)}</span>
-                </label>
-              ))}
+  <label
+    key={month}
+    className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
+  >
+    <input
+      type="checkbox"
+      checked={selectedMonths.includes(month)}
+      onChange={(e) =>
+        handleMonthChange(month, e.target.checked)
+      }
+      className="h-4 w-4"
+    />
+    <span>{t.monthLabels[month as keyof typeof t.monthLabels]}</span>
+  </label>
+))}
             </div>
           </div>
 
@@ -229,17 +229,17 @@ export default function HomeSearch({
         </div>
 
         {selectedMonths.length > 0 && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {selectedMonths.map((month) => (
-              <span
-                key={month}
-                className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700"
-              >
-                {formatMonth(month)}
-              </span>
-            ))}
-          </div>
-        )}
+  <div className="mb-6 flex flex-wrap gap-2">
+    {selectedMonths.map((month) => (
+      <span
+        key={month}
+        className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700"
+      >
+        {t.monthLabels[month as keyof typeof t.monthLabels]}
+      </span>
+    ))}
+  </div>
+)}
 
         {filteredListings.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
