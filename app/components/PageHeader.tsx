@@ -6,30 +6,32 @@ import { translations, type Language } from "@/lib/translations";
 type Props = {
   title: string;
   lang?: Language;
+  backHref?: string;
 };
 
-export default function PageHeader({ title, lang = "en" }: Props) {
+export default function PageHeader({ title, lang: langProp = "en", backHref = "/" }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
-  };
+  // Always read lang live from the URL so toggling language is reflected instantly
+  const currentLang = (searchParams.get("lang") === "he" ? "he" : langProp) as Language;
+  const isHe = currentLang === "he";
+  const t = translations[currentLang];
 
   const toggleLang = () => {
-    const nextLang = lang === "en" ? "he" : "en";
+    const nextLang = currentLang === "en" ? "he" : "en";
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", nextLang);
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const t = translations[lang];
-  const isHe = lang === "he";
+  const handleBack = () => {
+    // Carry current lang (from URL) back to the previous page
+    const params = new URLSearchParams();
+    params.set("lang", currentLang);
+    router.push(`${backHref}?${params.toString()}`);
+  };
 
   return (
     <header className="border-b border-gray-200 bg-white" dir={isHe ? "rtl" : "ltr"}>

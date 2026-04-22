@@ -148,7 +148,7 @@ export default function CreateListingClient({ lang }: Props) {
 
   return (
     <>
-      <PageHeader title={t.createListingTitle} lang={lang} />
+      <PageHeader title={t.createListingTitle} lang={lang} backHref="/" />
 
       <main className="min-h-screen bg-gray-50 px-4 py-8" dir={isHe ? "rtl" : "ltr"}>
         <div className="mx-auto max-w-3xl">

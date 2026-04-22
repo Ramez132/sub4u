@@ -2,15 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
+import StartConversationButton from "@/app/components/StartConversationButton";
+import ListingGallery from "@/app/components/ListingGallery";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; from?: string }>;
 };
 
 async function translateText(text: string, targetLang: Language): Promise<string> {
   if (targetLang === "en") return text;
-
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -22,15 +23,12 @@ async function translateText(text: string, targetLang: Language): Promise<string
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: `Translate the following apartment listing description to Hebrew. Return only the translated text, nothing else:\n\n${text}`,
-          },
-        ],
+        messages: [{
+          role: "user",
+          content: `Translate the following apartment listing description to Hebrew. Return only the translated text, nothing else:\n\n${text}`,
+        }],
       }),
     });
-
     const data = await response.json();
     return data?.content?.[0]?.text ?? text;
   } catch {
@@ -43,10 +41,12 @@ export default async function ListingPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const id = params.id;
   const lang: Language = searchParams?.lang === "he" ? "he" : "en";
+  const from = searchParams?.from === "account" ? "/my-account" : "/";
   const t = translations[lang];
   const isHe = lang === "he";
 
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: listing, error } = await supabase
     .from("listings")
@@ -54,46 +54,161 @@ export default async function ListingPage(props: PageProps) {
     .eq("id", id)
     .single();
 
-  if (error || !listing) {
-    notFound();
+  if (error || !listing) notFound();
+
+  // Fetch images
+  const { data: images } = await supabase
+    .from("listing_images")
+    .select("image_url, position")
+    .eq("listing_id", id)
+    .order("position", { ascending: true });
+
+  const imageUrls = images?.map((img) => img.image_url) ?? [];
+
+  const isOwner = user?.id === listing.user_id;
+
+  let existingConversationId: string | null = null;
+  if (user && !isOwner) {
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("listing_id", listing.id)
+      .eq("tenant_id", user.id)
+      .single();
+    existingConversationId = existing?.id ?? null;
   }
 
   const description = listing.description
     ? await translateText(listing.description, lang)
     : null;
 
+  // Format dates nicely
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(isHe ? "he-IL" : "en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   return (
-    <main className="min-h-screen bg-white" dir={isHe ? "rtl" : "ltr"}>
-      <PageHeader title={t.listingDetail} lang={lang} />
+    <main className="min-h-screen bg-[#F8F7F4]" dir={isHe ? "rtl" : "ltr"}>
+      <PageHeader title="" lang={lang} backHref={from} />
 
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="mb-4 text-3xl font-bold">{listing.title}</h1>
+      {/* Image gallery */}
+      <ListingGallery images={imageUrls} title={listing.title} />
 
-        <p className="mb-2 text-lg text-gray-700">
-          📍 {t.locationLabel}: {listing.city}
-          {listing.neighborhood ? `, ${listing.neighborhood}` : ""}
-        </p>
+      {/* Content */}
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="grid gap-8 lg:grid-cols-3">
 
-        <p className="mb-2 text-lg text-gray-700">
-          💰 {t.priceLabel}: ₪{listing.price}
-        </p>
+          {/* Left: main info */}
+          <div className="lg:col-span-2">
+            {/* Title + location */}
+            <div className="mb-6">
+              {listing.is_boosted && (
+                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-600">
+                  ⚡ {isHe ? "ממומן" : "Featured"}
+                </span>
+              )}
+              <h1 className="mb-2 text-3xl font-bold leading-tight text-gray-900">
+                {listing.title}
+              </h1>
+              <p className="flex items-center gap-2 text-base text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-2.013 3.5-4.697 3.5-8.327a8 8 0 10-16 0c0 3.63 1.556 6.314 3.5 8.327a19.58 19.58 0 002.683 2.282 16.975 16.975 0 001.144.742z" clipRule="evenodd" />
+                </svg>
+                {listing.city}{listing.neighborhood ? `, ${listing.neighborhood}` : ""}
+              </p>
+            </div>
 
-        <p className="mb-2 text-lg text-gray-700">
-          📅 {t.availableFrom}: {listing.start_date}
-        </p>
+            {/* Divider */}
+            <hr className="mb-6 border-gray-200" />
 
-        <p className="mb-6 text-lg text-gray-700">
-          📅 {t.availableUntil}: {listing.end_date}
-        </p>
+            {/* Dates */}
+            <div className="mb-6 grid grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {t.availableFrom}
+                </p>
+                <p className="text-sm font-semibold text-gray-900">{formatDate(listing.start_date)}</p>
+              </div>
+              <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {t.availableUntil}
+                </p>
+                <p className="text-sm font-semibold text-gray-900">{formatDate(listing.end_date)}</p>
+              </div>
+            </div>
 
-        {description && (
-          <div>
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              {t.description}
-            </h2>
-            <p className="text-gray-800 leading-relaxed">{description}</p>
+            {/* Description */}
+            {description && (
+              <div className="mb-6">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">{t.description}</h2>
+                <p className="leading-relaxed text-gray-600">{description}</p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: price card + CTA */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-md">
+              <div className="mb-4 text-center">
+                <span className="text-4xl font-bold text-gray-900">₪{listing.price.toLocaleString()}</span>
+                <span className="ml-1 text-sm text-gray-400">{isHe ? "/ חודש" : "/ month"}</span>
+              </div>
+
+              <hr className="mb-4 border-gray-100" />
+
+              <div className="mb-5 space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>{t.city}</span>
+                  <span className="font-medium text-gray-900">{listing.city}</span>
+                </div>
+                {listing.neighborhood && (
+                  <div className="flex justify-between">
+                    <span>{isHe ? "שכונה" : "Neighborhood"}</span>
+                    <span className="font-medium text-gray-900">{listing.neighborhood}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Message / sign in CTA */}
+              {user && !isOwner && (
+                <div className="w-full">
+                  {existingConversationId ? (
+                    <a
+                      href={`/inbox/${existingConversationId}?lang=${lang}`}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      {isHe ? "המשך שיחה" : "Continue conversation"}
+                    </a>
+                  ) : (
+                    <StartConversationButton listingId={listing.id} ownerId={listing.user_id} lang={lang} />
+                  )}
+                </div>
+              )}
+
+              {!user && (
+                <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center text-sm text-gray-500">
+                  {isHe ? "התחבר כדי לשלוח הודעה" : "Sign in to message the renter"}{" "}
+                  <a href={`/sign-in?lang=${lang}&mode=signin`} className="font-semibold text-orange-500 hover:underline">
+                    {isHe ? "התחברות" : "Sign in"}
+                  </a>
+                </div>
+              )}
+
+              {isOwner && (
+                <div className="rounded-2xl bg-orange-50 px-4 py-3 text-center text-sm font-medium text-orange-600">
+                  {isHe ? "זו המודעה שלך" : "This is your listing"}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

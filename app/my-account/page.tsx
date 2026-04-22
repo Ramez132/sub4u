@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
 import { revalidatePath } from "next/cache";
 import { translations, type Language } from "@/lib/translations";
+import DeleteListingButton from "@/app/components/DeleteListingButton";
 
 function maskIdNumber(idNumber: string) {
   if (!idNumber) return "";
@@ -21,14 +22,8 @@ export default async function MyAccountPage(props: PageProps) {
   const isHe = lang === "he";
 
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -44,72 +39,53 @@ export default async function MyAccountPage(props: PageProps) {
 
   async function boostListing(formData: FormData) {
     "use server";
-
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect("/sign-in");
-    }
-
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/sign-in");
     const listingId = Number(formData.get("listingId"));
-
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + 12);
-
     await supabase
       .from("listings")
-      .update({
-        is_boosted: true,
-        boost_expires_at: expires.toISOString(),
-      })
+      .update({ is_boosted: true, boost_expires_at: expires.toISOString() })
       .eq("id", listingId)
       .eq("user_id", user.id);
+    revalidatePath("/my-account");
+    revalidatePath("/");
+  }
 
+  async function deleteListing(formData: FormData) {
+    "use server";
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/sign-in");
+    const listingId = Number(formData.get("listingId"));
+    await supabase
+      .from("listings")
+      .delete()
+      .eq("id", listingId)
+      .eq("user_id", user.id);
     revalidatePath("/my-account");
     revalidatePath("/");
   }
 
   return (
     <>
-      <PageHeader title={t.myAccountTitle} lang={lang} />
+      <PageHeader title={t.myAccountTitle} lang={lang} backHref="/" />
 
       <main className="min-h-screen bg-gray-50 px-4 py-8" dir={isHe ? "rtl" : "ltr"}>
         <div className="mx-auto max-w-5xl space-y-6">
+
           <div className="grid gap-6 md:grid-cols-2">
             <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="mb-6 text-2xl font-semibold text-gray-900">
                 {isHe ? "פרטים אישיים" : "Personal Information"}
               </h2>
-
               <div className="space-y-4 text-gray-700">
-                <p>
-                  <span className="font-semibold text-gray-900">
-                    {isHe ? "שם מלא" : "Full name"}:
-                  </span>{" "}
-                  {profile?.full_name || "-"}
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-900">
-                    {isHe ? "אימייל" : "Email"}:
-                  </span>{" "}
-                  {profile?.email || user.email || "-"}
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-900">
-                    {isHe ? "מספר טלפון" : "Phone number"}:
-                  </span>{" "}
-                  {profile?.phone_number || "-"}
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-900">
-                    {isHe ? "תעודת זהות" : "ID number"}:
-                  </span>{" "}
-                  {profile?.id_number ? maskIdNumber(profile.id_number) : "-"}
-                </p>
+                <p><span className="font-semibold text-gray-900">{isHe ? "שם מלא" : "Full name"}:</span>{" "}{profile?.full_name || "-"}</p>
+                <p><span className="font-semibold text-gray-900">{isHe ? "אימייל" : "Email"}:</span>{" "}{profile?.email || user.email || "-"}</p>
+                <p><span className="font-semibold text-gray-900">{isHe ? "מספר טלפון" : "Phone number"}:</span>{" "}{profile?.phone_number || "-"}</p>
+                <p><span className="font-semibold text-gray-900">{isHe ? "תעודת זהות" : "ID number"}:</span>{" "}{profile?.id_number ? maskIdNumber(profile.id_number) : "-"}</p>
               </div>
             </section>
 
@@ -117,9 +93,7 @@ export default async function MyAccountPage(props: PageProps) {
               <h2 className="mb-6 text-2xl font-semibold text-gray-900">
                 {isHe ? "אמצעי תשלום" : "Payment Methods"}
               </h2>
-              <p className="text-gray-600">
-                {isHe ? "לא נוספו אמצעי תשלום." : "No payment methods added yet."}
-              </p>
+              <p className="text-gray-600">{isHe ? "לא נוספו אמצעי תשלום." : "No payment methods added yet."}</p>
             </section>
           </div>
 
@@ -133,45 +107,72 @@ export default async function MyAccountPage(props: PageProps) {
                 {listings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300 hover:bg-gray-50"
+                    className="rounded-2xl border border-gray-200 px-5 py-4 transition hover:border-gray-300 hover:bg-gray-50"
                   >
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {listing.title}
-                        </h3>
-
-                        {listing.is_boosted && listing.boost_expires_at && (
-                          <span className="mt-1 inline-block rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-600">
-                            {isHe ? "ממומן 🚀" : "Boosted 🚀"}
-                          </span>
-                        )}
-
-                        <p className="text-sm text-gray-600">
-                          {listing.city}
-                          {listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{listing.title}</h3>
+                          {listing.is_boosted && listing.boost_expires_at && (
+                            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-600">
+                              {isHe ? "ממומן 🚀" : "Boosted 🚀"}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          {listing.city}{listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {listing.start_date} → {listing.end_date}
                         </p>
                       </div>
 
-                      <div className="text-sm font-semibold text-orange-600">
-                        ₪{listing.price}
+                      <div className="text-lg font-bold text-orange-500">
+                        ₪{listing.price.toLocaleString()}
                       </div>
                     </div>
 
-                    <form action={boostListing} className="mt-4">
-                      <input type="hidden" name="listingId" value={listing.id} />
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+                    {/* Action buttons */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {/* View */}
+                      <a
+                        href={`/listings/${listing.id}?lang=${lang}&from=account`}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                       >
-                        {isHe ? "קדם מודעה 🚀" : "Boost Listing 🚀"}
-                      </button>
-                    </form>
+                        {isHe ? "צפה" : "View"}
+                      </a>
+
+                      {/* Edit */}
+                      <a
+                        href={`/edit-listing/${listing.id}?lang=${lang}`}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                      >
+                        {isHe ? "ערוך" : "Edit"}
+                      </a>
+
+                      {/* Boost */}
+                      <form action={boostListing}>
+                        <input type="hidden" name="listingId" value={listing.id} />
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+                        >
+                          {isHe ? "קדם 🚀" : "Boost 🚀"}
+                        </button>
+                      </form>
+
+                      {/* Delete */}
+                      <DeleteListingButton
+                        listingId={listing.id}
+                        deleteAction={deleteListing}
+                        isHe={isHe}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl bg-gray-50 px-4 py-6 text-gray-600">
+              <div className="rounded-2xl bg-gray-50 px-4 py-6 text-gray-500">
                 {isHe ? "עדיין לא פרסמת מודעות." : "You have not created any listings yet."}
               </div>
             )}
