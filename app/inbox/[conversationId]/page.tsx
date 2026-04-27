@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { translations, type Language } from "@/lib/translations";
 import PageHeader from "@/app/components/PageHeader";
 
@@ -13,14 +13,12 @@ type Message = {
   created_at: string;
 };
 
-type Props = {
-  params: { id: string };
-};
-
-export default function ConversationPage({ params }: Props) {
-  const conversationId = params.id;
+function ConversationInner() {
+  const params = useParams();
+  const conversationId = params.conversationId as string;
   const searchParams = useSearchParams();
   const lang: Language = searchParams.get("lang") === "he" ? "he" : "en";
+  const t = translations[lang];
   const isHe = lang === "he";
 
   const supabase = createClient();
@@ -33,14 +31,12 @@ export default function ConversationPage({ params }: Props) {
   const [sending, setSending] = useState(false);
   const [listingTitle, setListingTitle] = useState("");
 
-  // Load user + conversation info
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push(`/sign-in?lang=${lang}&mode=signin`); return; }
       setUserId(user.id);
 
-      // Load conversation + listing title
       const { data: conv } = await supabase
         .from("conversations")
         .select("listings ( title )")
@@ -50,7 +46,6 @@ export default function ConversationPage({ params }: Props) {
       const listing = (Array.isArray(conv?.listings) ? conv.listings[0] : conv?.listings) as { title: string } | null;
       if (listing?.title) setListingTitle(listing.title);
 
-      // Load messages
       const { data: msgs } = await supabase
         .from("messages")
         .select("*")
@@ -62,7 +57,6 @@ export default function ConversationPage({ params }: Props) {
     load();
   }, [conversationId]);
 
-  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -83,7 +77,6 @@ export default function ConversationPage({ params }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [conversationId]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -119,34 +112,26 @@ export default function ConversationPage({ params }: Props) {
   return (
     <div className="flex h-screen flex-col" dir={isHe ? "rtl" : "ltr"}>
       <PageHeader
-        title={listingTitle || (isHe ? "שיחה" : "Conversation")}
+        title={listingTitle || t.conversation}
         lang={lang}
         backHref="/inbox"
       />
 
-      {/* Messages area */}
       <div className="flex-1 overflow-y-auto bg-gray-50 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-3">
           {messages.length === 0 && (
-            <p className="text-center text-sm text-gray-400">
-              {isHe ? "התחל את השיחה 👋" : "Start the conversation 👋"}
-            </p>
+            <p className="text-center text-sm text-gray-400">{t.startConversation}</p>
           )}
 
           {messages.map((msg) => {
             const isMine = msg.sender_id === userId;
             return (
-              <div
-                key={msg.id}
-                className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    isMine
-                      ? "rounded-br-sm bg-orange-500 text-white"
-                      : "rounded-bl-sm bg-white border border-gray-200 text-gray-900"
-                  }`}
-                >
+              <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  isMine
+                    ? "rounded-br-sm bg-orange-500 text-white"
+                    : "rounded-bl-sm border border-gray-200 bg-white text-gray-900"
+                }`}>
                   <p>{msg.content}</p>
                   <p className={`mt-1 text-right text-xs ${isMine ? "text-orange-200" : "text-gray-400"}`}>
                     {formatTime(msg.created_at)}
@@ -159,7 +144,6 @@ export default function ConversationPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Input bar */}
       <div className="border-t border-gray-200 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <input
@@ -167,7 +151,7 @@ export default function ConversationPage({ params }: Props) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isHe ? "כתוב הודעה..." : "Type a message..."}
+            placeholder={t.typeMessage}
             className="flex-1 rounded-full border border-gray-300 px-4 py-3 text-sm outline-none focus:border-orange-500"
           />
           <button
@@ -183,5 +167,13 @@ export default function ConversationPage({ params }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ConversationPage() {
+  return (
+    <Suspense>
+      <ConversationInner />
+    </Suspense>
   );
 }
