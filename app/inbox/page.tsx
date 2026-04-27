@@ -59,7 +59,7 @@ export default async function InboxPage(props: PageProps) {
         ) : (
           <div className="space-y-3">
             {conversations.map((conv) => {
-              const listing = conv.listings as { title: string; city: string } | null;
+              const listing = (Array.isArray(conv.listings) ? conv.listings[0] : conv.listings) as { title: string; city: string } | null;
               const allMessages = (conv.messages ?? []) as { content: string; created_at: string; sender_id: string }[];
               const lastMessage = allMessages.sort(
                 (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
