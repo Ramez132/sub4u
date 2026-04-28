@@ -30,6 +30,9 @@ function ConversationInner() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [listingTitle, setListingTitle] = useState("");
+  const [otherUserName, setOtherUserName] = useState("");
+  const [otherUserEmail, setOtherUserEmail] = useState("");
+  const [myName, setMyName] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -37,15 +40,35 @@ function ConversationInner() {
       if (!user) { router.push(`/sign-in?lang=${lang}&mode=signin`); return; }
       setUserId(user.id);
 
+      // Load conversation + listing
       const { data: conv } = await supabase
         .from("conversations")
-        .select("listings ( title )")
+        .select("tenant_id, owner_id, listings ( title )")
         .eq("id", conversationId)
         .single();
 
-      const listing = (Array.isArray(conv?.listings) ? conv.listings[0] : conv?.listings) as { title: string } | null;
+      if (!conv) return;
+
+      const listing = (Array.isArray(conv.listings) ? conv.listings[0] : conv.listings) as { title: string } | null;
       if (listing?.title) setListingTitle(listing.title);
 
+      // Figure out who the other user is
+      const otherUserId = conv.owner_id === user.id ? conv.tenant_id : conv.owner_id;
+
+      // Load both profiles
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [user.id, otherUserId]);
+
+      const myProfile = profiles?.find((p) => p.id === user.id);
+      const otherProfile = profiles?.find((p) => p.id === otherUserId);
+
+      setMyName(myProfile?.full_name || "");
+      setOtherUserName(otherProfile?.full_name || (isHe ? "משתמש" : "User"));
+      setOtherUserEmail(otherProfile?.email || "");
+
+      // Load messages
       const { data: msgs } = await supabase
         .from("messages")
         .select("*")
@@ -57,6 +80,7 @@ function ConversationInner() {
     load();
   }, [conversationId]);
 
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -85,11 +109,27 @@ function ConversationInner() {
     if (!newMessage.trim() || !userId) return;
     setSending(true);
 
-    await supabase.from("messages").insert({
+    const { error } = await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id: userId,
       content: newMessage.trim(),
     });
+
+    if (!error && otherUserEmail) {
+      // Send email notification
+      await fetch("/api/notify-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toEmail: otherUserEmail,
+          toName: otherUserName,
+          fromName: myName,
+          listingTitle,
+          message: newMessage.trim(),
+          conversationId,
+        }),
+      });
+    }
 
     setNewMessage("");
     setSending(false);
@@ -112,10 +152,17 @@ function ConversationInner() {
   return (
     <div className="flex h-screen flex-col" dir={isHe ? "rtl" : "ltr"}>
       <PageHeader
-        title={listingTitle || t.conversation}
+        title={otherUserName || listingTitle || t.conversation}
         lang={lang}
         backHref="/inbox"
       />
+
+      {/* Listing subtitle */}
+      {listingTitle && (
+        <div className="border-b border-gray-100 bg-white px-4 py-2 text-center text-xs text-gray-400">
+          {isHe ? "בנוגע ל: " : "Re: "}{listingTitle}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto bg-gray-50 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-3">
@@ -127,11 +174,19 @@ function ConversationInner() {
             const isMine = msg.sender_id === userId;
             return (
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                {!isMine && (
+                  <div className="mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">
+                    {otherUserName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   isMine
                     ? "rounded-br-sm bg-orange-500 text-white"
                     : "rounded-bl-sm border border-gray-200 bg-white text-gray-900"
                 }`}>
+                  {!isMine && (
+                    <p className="mb-1 text-xs font-semibold text-orange-500">{otherUserName}</p>
+                  )}
                   <p>{msg.content}</p>
                   <p className={`mt-1 text-right text-xs ${isMine ? "text-orange-200" : "text-gray-400"}`}>
                     {formatTime(msg.created_at)}

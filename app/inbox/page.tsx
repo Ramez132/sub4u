@@ -10,10 +10,10 @@ type PageProps = {
 export default async function InboxPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const lang: Language = searchParams?.lang === "he" ? "he" : "en";
+  const t = translations[lang];
   const isHe = lang === "he";
 
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/sign-in?lang=${lang}&mode=signin`);
 
@@ -31,13 +31,21 @@ export default async function InboxPage(props: PageProps) {
     .or(`tenant_id.eq.${user.id},owner_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
 
+  // Fetch profiles for all other users in conversations
+  const otherUserIds = (conversations ?? []).map((conv) =>
+    conv.owner_id === user.id ? conv.tenant_id : conv.owner_id
+  );
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name")
+    .in("id", otherUserIds.length > 0 ? otherUserIds : ["00000000-0000-0000-0000-000000000000"]);
+
+  const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]));
+
   return (
     <main className="min-h-screen bg-gray-50" dir={isHe ? "rtl" : "ltr"}>
-      <PageHeader
-        title={isHe ? "תיבת הודעות" : "Inbox"}
-        lang={lang}
-        backHref="/"
-      />
+      <PageHeader title={t.inbox} lang={lang} backHref="/" />
 
       <div className="mx-auto max-w-2xl px-4 py-8">
         {!conversations || conversations.length === 0 ? (
@@ -47,14 +55,8 @@ export default async function InboxPage(props: PageProps) {
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </div>
-            <p className="text-lg font-semibold text-gray-900">
-              {isHe ? "אין הודעות עדיין" : "No messages yet"}
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              {isHe
-                ? "כשתתחיל שיחה עם משכיר, היא תופיע כאן"
-                : "When you start a conversation with a renter, it will appear here"}
-            </p>
+            <p className="text-lg font-semibold text-gray-900">{t.noMessages}</p>
+            <p className="mt-1 text-sm text-gray-500">{t.noMessagesDesc}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -65,6 +67,8 @@ export default async function InboxPage(props: PageProps) {
                 (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
               )[0];
               const isOwner = conv.owner_id === user.id;
+              const otherUserId = isOwner ? conv.tenant_id : conv.owner_id;
+              const otherUserName = profileMap[otherUserId] || (isHe ? "משתמש" : "User");
 
               return (
                 <a
@@ -72,28 +76,26 @@ export default async function InboxPage(props: PageProps) {
                   href={`/inbox/${conv.id}?lang=${lang}`}
                   className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-orange-300 hover:shadow-md"
                 >
-                  {/* Avatar */}
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
+                  {/* Avatar with initials */}
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600">
+                    {otherUserName.charAt(0).toUpperCase()}
                   </div>
 
                   <div className="min-w-0 flex-1">
+                    {/* Other person's name */}
                     <p className="truncate font-semibold text-gray-900">
-                      {listing?.title ?? (isHe ? "מודעה" : "Listing")}
+                      {otherUserName}
                     </p>
+                    {/* Listing title */}
                     <p className="truncate text-sm text-gray-500">
-                      {listing?.city ?? ""}
+                      {listing?.title ?? (isHe ? "מודעה" : "Listing")}
                       {isOwner
                         ? (isHe ? " · שוכר פוטנציאלי" : " · Potential tenant")
                         : (isHe ? " · משכיר" : " · Renter")}
                     </p>
                     {lastMessage && (
                       <p className="mt-1 truncate text-sm text-gray-400">
-                        {lastMessage.sender_id === user.id
-                          ? (isHe ? "אתה: " : "You: ")
-                          : ""}
+                        {lastMessage.sender_id === user.id ? t.you : ""}
                         {lastMessage.content}
                       </p>
                     )}
