@@ -175,20 +175,20 @@ function ConversationInner() {
             return (
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {!isMine && (
-                  <div className="mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">
+                  <div className="mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-orange-600">
                     {otherUserName.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   isMine
-                    ? "rounded-br-sm bg-orange-500 text-white"
+                    ? "rounded-br-sm bg-blue-600 text-white"
                     : "rounded-bl-sm border border-gray-200 bg-white text-gray-900"
                 }`}>
                   {!isMine && (
-                    <p className="mb-1 text-xs font-semibold text-orange-500">{otherUserName}</p>
+                    <p className="mb-1 text-xs font-semibold text-blue-600">{otherUserName}</p>
                   )}
                   <p>{msg.content}</p>
-                  <p className={`mt-1 text-right text-xs ${isMine ? "text-orange-200" : "text-gray-400"}`}>
+                  <p className={`mt-1 text-right text-xs ${isMine ? "text-blue-200" : "text-gray-400"}`}>
                     {formatTime(msg.created_at)}
                   </p>
                 </div>
@@ -207,12 +207,12 @@ function ConversationInner() {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t.typeMessage}
-            className="flex-1 rounded-full border border-gray-300 px-4 py-3 text-sm outline-none focus:border-orange-500"
+            className="flex-1 rounded-full border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
           />
           <button
             onClick={handleSend}
             disabled={sending || !newMessage.trim()}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-orange-500 text-white transition hover:bg-orange-600 disabled:opacity-50"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />

@@ -74,10 +74,10 @@ export default async function InboxPage(props: PageProps) {
                 <a
                   key={conv.id}
                   href={`/inbox/${conv.id}?lang=${lang}`}
-                  className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-orange-300 hover:shadow-md"
+                  className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
                 >
                   {/* Avatar with initials */}
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-600">
                     {otherUserName.charAt(0).toUpperCase()}
                   </div>
 

@@ -165,7 +165,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={isHe ? "לדוג׳: סאבלט שמשי ליד דיזנגוף" : "e.g. Sunny sublet near Dizengoff"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                 required
               />
             </div>
@@ -177,7 +177,7 @@ export default function CreateListingClient({ lang }: Props) {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               >
                 {cities.map((cityOption) => (
                   <option key={cityOption} value={cityOption}>
@@ -196,7 +196,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
                 placeholder={isHe ? "לדוג׳: פלורנטין" : "e.g. Florentin"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder={isHe ? "לדוג׳: 4500" : "e.g. 4500"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                 required
               />
             </div>
@@ -223,7 +223,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={isHe ? "תאר את הדירה..." : "Describe the apartment..."}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               />
             </div>
 
@@ -236,7 +236,7 @@ export default function CreateListingClient({ lang }: Props) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -249,7 +249,7 @@ export default function CreateListingClient({ lang }: Props) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -265,7 +265,7 @@ export default function CreateListingClient({ lang }: Props) {
                 accept="image/*"
                 multiple
                 onChange={handleFilesChange}
-                className="block w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-semibold file:text-orange-700"
+                className="block w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700"
               />
 
               <p className="mt-2 text-sm text-gray-500">
@@ -309,7 +309,7 @@ export default function CreateListingClient({ lang }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-orange-500 px-8 py-4 text-base font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+              className="rounded-full bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
             >
               {loading
                 ? isHe ? "יוצר מודעה..." : "Creating..."
