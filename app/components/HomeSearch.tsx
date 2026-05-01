@@ -23,38 +23,24 @@ const monthOptions = [
   "july", "august", "september", "october", "november", "december",
 ];
 
-function formatMonth(month: string) {
-  return month.charAt(0).toUpperCase() + month.slice(1);
-}
-
-function getMonthRangeForYear(month: string, year: number) {
-  const monthIndex = monthOptions.indexOf(month);
-  const start = new Date(Date.UTC(year, monthIndex, 1));
-  const end = new Date(Date.UTC(year, monthIndex + 1, 0));
-  return { start, end };
-}
-
-function doesListingMatchSelectedMonths(
-  startDate: string,
-  endDate: string,
-  selectedMonths: string[]
-) {
+function doesListingMatchSelectedMonths(startDate: string, endDate: string, selectedMonths: string[]) {
   if (selectedMonths.length === 0) return true;
   const listingStart = new Date(startDate);
   const listingEnd = new Date(endDate);
   for (const month of selectedMonths) {
+    const monthIndex = monthOptions.indexOf(month);
     const startYear = listingStart.getUTCFullYear();
     const endYear = listingEnd.getUTCFullYear();
     for (let year = startYear; year <= endYear; year++) {
-      const { start, end } = getMonthRangeForYear(month, year);
+      const start = new Date(Date.UTC(year, monthIndex, 1));
+      const end = new Date(Date.UTC(year, monthIndex + 1, 0));
       if (listingStart <= end && listingEnd >= start) return true;
     }
   }
   return false;
 }
 
-// Mini carousel component for each card
-function CardCarousel({ images, listingId }: { images: string[]; listingId: number }) {
+function CardCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
 
   if (images.length === 0) {
@@ -67,64 +53,55 @@ function CardCarousel({ images, listingId }: { images: string[]; listingId: numb
     );
   }
 
-  const prev = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrent((i) => (i === 0 ? images.length - 1 : i - 1));
-  };
-
-  const next = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrent((i) => (i === images.length - 1 ? 0 : i + 1));
-  };
+  const prev = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setCurrent((i) => (i === 0 ? images.length - 1 : i - 1)); };
+  const next = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setCurrent((i) => (i === images.length - 1 ? 0 : i + 1)); };
 
   return (
     <div className="relative h-52 w-full overflow-hidden bg-gray-100">
-      <img
-        src={images[current]}
-        alt={`Listing image ${current + 1}`}
-        className="h-full w-full object-cover transition-opacity duration-300"
-      />
-
+      <img src={images[current]} alt={`Image ${current + 1}`} className="h-full w-full object-cover" />
       {images.length > 1 && (
         <>
-          <button
-            onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+          <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <button
-            onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+          <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
-
-          {/* Dots */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
             {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === current ? "w-4 bg-white" : "w-1.5 bg-white/60"
-                }`}
-              />
+              <button key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
+                className={`h-1.5 rounded-full transition-all ${i === current ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
             ))}
           </div>
-
-          {/* Counter */}
-          <div className="absolute top-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-xs text-white">
-            {current + 1}/{images.length}
-          </div>
+          <div className="absolute top-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-xs text-white">{current + 1}/{images.length}</div>
         </>
       )}
+    </div>
+  );
+}
+
+function ListingCard({ listing, images, lang, t }: { listing: Listing; images: string[]; lang: string; t: any }) {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+      <CardCarousel images={images} />
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-2 flex items-start justify-between gap-4">
+          <h3 className="text-xl font-semibold text-gray-900">{listing.title}</h3>
+          <span className="whitespace-nowrap rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+            ₪{listing.price.toLocaleString()}
+          </span>
+        </div>
+        <p className="text-sm text-gray-600">{listing.city}</p>
+        <p className="mb-2 text-sm text-gray-500">{listing.neighborhood}</p>
+        <p className="mb-3 line-clamp-2 text-sm text-gray-700">{listing.description}</p>
+        <p className="mb-4 text-sm text-gray-500">{listing.start_date} → {listing.end_date}</p>
+        <a
+          href={`/listings/${listing.id}?lang=${lang}`}
+          className="mt-auto block w-full rounded-full border border-blue-600 px-4 py-3 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+        >
+          {t.viewListing}
+        </a>
+      </div>
     </div>
   );
 }
@@ -143,9 +120,13 @@ export default function HomeSearch({
   const [hasSearched, setHasSearched] = useState(false);
   const t = translations[lang];
   const resultsRef = useRef<HTMLElement | null>(null);
+  const isHe = lang === "he";
+
+  const boostedListings = useMemo(() => initialListings.filter((l) => l.is_boosted), [initialListings]);
 
   const filteredListings = useMemo(() => {
     return initialListings.filter((listing) => {
+      if (listing.is_boosted) return false; // boosted shown separately
       const cityMatch = selectedCity === "all" ? true : listing.city === selectedCity;
       const monthMatch = doesListingMatchSelectedMonths(listing.start_date, listing.end_date, selectedMonths);
       return cityMatch && monthMatch;
@@ -158,13 +139,14 @@ export default function HomeSearch({
 
   const handleSearch = () => {
     setHasSearched(true);
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    setTimeout(() => { resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
   };
+
+  const filtersApplied = selectedCity !== "all" || selectedMonths.length > 0;
 
   return (
     <>
+      {/* Hero */}
       <section
         className="relative h-[70vh] min-h-[500px] w-full bg-cover bg-center"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80')" }}
@@ -183,54 +165,57 @@ export default function HomeSearch({
         </div>
       </section>
 
+      {/* Search */}
       <section id="search-section" className="mx-auto max-w-7xl px-4 py-10">
         <div className="flex w-full flex-col gap-3 rounded-[2rem] bg-white p-4 shadow-2xl md:flex-row md:items-start md:gap-0">
           <div className="flex-1 px-4 py-3 text-left">
             <label className="mb-2 block text-sm font-medium text-gray-500">{t.city}</label>
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full bg-transparent text-base text-gray-900 outline-none"
-            >
+            <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full bg-transparent text-base text-gray-900 outline-none">
               <option value="all">{t.allCities}</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
+              {cities.map((city) => <option key={city} value={city}>{city}</option>)}
             </select>
           </div>
-
           <div className="hidden h-24 w-px bg-gray-200 md:block" />
-
           <div className="flex-1 px-4 py-3 text-left">
             <label className="mb-3 block text-sm font-medium text-gray-500">{t.months}</label>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
               {monthOptions.map((month) => (
                 <label key={month} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800">
-                  <input
-                    type="checkbox"
-                    checked={selectedMonths.includes(month)}
-                    onChange={(e) => handleMonthChange(month, e.target.checked)}
-                    className="h-4 w-4 accent-blue-600"
-                  />
+                  <input type="checkbox" checked={selectedMonths.includes(month)} onChange={(e) => handleMonthChange(month, e.target.checked)} className="h-4 w-4 accent-blue-600" />
                   <span>{t.monthLabels[month as keyof typeof t.monthLabels]}</span>
                 </label>
               ))}
             </div>
           </div>
-
           <div className="flex items-center px-4 py-3">
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="w-full rounded-full bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 md:w-auto"
-            >
+            <button type="button" onClick={handleSearch} className="w-full rounded-full bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 md:w-auto">
               {t.search}
             </button>
           </div>
         </div>
       </section>
 
+      {/* Results */}
       <section ref={resultsRef} id="results-section" className="mx-auto max-w-7xl px-4 py-12">
+
+        {/* Boosted section — only shown when no filters applied */}
+        {!filtersApplied && boostedListings.length > 0 && (
+          <div className="mb-12">
+            <div className="mb-6 flex items-center gap-3">
+              <span className="flex items-center gap-1.5 rounded-full bg-green-700 px-3 py-1 text-sm font-semibold text-white">
+                ⚡ {isHe ? "מודעות מומלצות" : "Featured listings"}
+              </span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {boostedListings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} images={imagesByListing[listing.id] ?? []} lang={lang} t={t} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All listings */}
         <div className="mb-8 flex items-center justify-between">
           <h2 className="text-3xl font-bold text-gray-900">
             {selectedCity === "all" ? t.availableSublets : `${t.subletsIn} ${selectedCity}`}
@@ -251,35 +236,7 @@ export default function HomeSearch({
         {filteredListings.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredListings.map((listing) => (
-              <div key={listing.id} className="flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
-
-                {/* Image carousel */}
-                <CardCarousel
-                  images={imagesByListing[listing.id] ?? []}
-                  listingId={listing.id}
-                />
-
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="mb-2 flex items-start justify-between gap-4">
-                    <h3 className="text-xl font-semibold text-gray-900">{listing.title}</h3>
-                    <span className="whitespace-nowrap rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-                      ₪{listing.price.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-600">{listing.city}</p>
-                  <p className="mb-2 text-sm text-gray-500">{listing.neighborhood}</p>
-                  <p className="mb-3 line-clamp-2 text-sm text-gray-700">{listing.description}</p>
-                  <p className="mb-4 text-sm text-gray-500">{listing.start_date} → {listing.end_date}</p>
-
-                  <a
-                    href={`/listings/${listing.id}?lang=${lang}`}
-                    className="mt-auto block w-full rounded-full border border-blue-600 px-4 py-3 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
-                  >
-                    {t.viewListing}
-                  </a>
-                </div>
-              </div>
+              <ListingCard key={listing.id} listing={listing} images={imagesByListing[listing.id] ?? []} lang={lang} t={t} />
             ))}
           </div>
         ) : hasSearched ? (
