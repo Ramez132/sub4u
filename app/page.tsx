@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/app/components/SignOutButton";
 import HomeSearch from "@/app/components/HomeSearch";
 import { type Language, translations } from "@/lib/translations";
+export const dynamic = "force-dynamic";
 
 export default async function Home({
   searchParams,
@@ -97,7 +98,7 @@ export default async function Home({
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -128,7 +129,7 @@ export default async function Home({
                 <a href={`/my-account?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">
                   {t.myAccount}
                 </a>
-                <a href={`/create-listing?lang=${lang}`} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                <a href={`/create-listing?lang=${lang}`} className="rounded-full bg-teal-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
                   {t.createListing}
                 </a>
                 <SignOutButton />
