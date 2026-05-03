@@ -42,6 +42,8 @@ function doesListingMatchSelectedMonths(startDate: string, endDate: string, sele
 
 function CardCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
+  const [sliding, setSliding] = useState<"left" | "right" | null>(null);
+  const [displayed, setDisplayed] = useState(0);
 
   if (images.length === 0) {
     return (
@@ -53,27 +55,80 @@ function CardCarousel({ images }: { images: string[] }) {
     );
   }
 
-  const prev = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setCurrent((i) => (i === 0 ? images.length - 1 : i - 1)); };
-  const next = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setCurrent((i) => (i === images.length - 1 ? 0 : i + 1)); };
+  const goTo = (index: number, direction: "left" | "right") => {
+    if (sliding) return;
+    setSliding(direction);
+    setCurrent(index);
+    setTimeout(() => {
+      setDisplayed(index);
+      setSliding(null);
+    }, 350);
+  };
+
+  const prev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    goTo(current === 0 ? images.length - 1 : current - 1, "right");
+  };
+
+  const next = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    goTo(current === images.length - 1 ? 0 : current + 1, "left");
+  };
+
+  const activeIndex = sliding ? current : displayed;
 
   return (
     <div className="relative h-52 w-full overflow-hidden bg-gray-100">
-      <img src={images[current]} alt={`Image ${current + 1}`} className="h-full w-full object-cover" />
+      <style>{`
+        @keyframes slide-in-left { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slide-in-right { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+      `}</style>
+
+      {/* Outgoing image */}
+      <img
+        src={images[displayed]}
+        alt={`Image ${displayed + 1}`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          transform: sliding === "left" ? "translateX(-100%)" : sliding === "right" ? "translateX(100%)" : "translateX(0)",
+          transition: sliding ? "transform 350ms ease-in-out" : "none",
+        }}
+      />
+
+      {/* Incoming image */}
+      {sliding && (
+        <img
+          src={images[current]}
+          alt={`Image ${current + 1}`}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ animation: `slide-in-${sliding} 350ms ease-in-out forwards` }}
+        />
+      )}
+
       {images.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white">
+          <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-md transition hover:bg-white">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow transition hover:bg-white">
+          <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-md transition hover:bg-white">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+
+          <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 flex gap-1.5">
             {images.map((_, i) => (
-              <button key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
-                className={`h-1.5 rounded-full transition-all ${i === current ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
+              <button
+                key={i}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); goTo(i, i > activeIndex ? "left" : "right"); }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"}`}
+              />
             ))}
           </div>
-          <div className="absolute top-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-xs text-white">{current + 1}/{images.length}</div>
+
+          <div className="absolute top-2 right-2 z-10 rounded-full bg-black/40 px-2 py-0.5 text-xs font-medium text-white">
+            {activeIndex + 1}/{images.length}
+          </div>
         </>
       )}
     </div>
@@ -82,12 +137,12 @@ function CardCarousel({ images }: { images: string[] }) {
 
 function ListingCard({ listing, images, lang, t }: { listing: Listing; images: string[]; lang: string; t: any }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
       <CardCarousel images={images} />
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-2 flex items-start justify-between gap-4">
           <h3 className="text-xl font-semibold text-gray-900">{listing.title}</h3>
-          <span className="whitespace-nowrap rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+          <span className="whitespace-nowrap rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
             ₪{listing.price.toLocaleString()}
           </span>
         </div>
@@ -97,7 +152,7 @@ function ListingCard({ listing, images, lang, t }: { listing: Listing; images: s
         <p className="mb-4 text-sm text-gray-500">{listing.start_date} → {listing.end_date}</p>
         <a
           href={`/listings/${listing.id}?lang=${lang}`}
-          className="mt-auto block w-full rounded-full border border-blue-600 px-4 py-3 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+          className="mt-auto block w-full rounded-full border border-teal-600 px-4 py-3 text-center text-sm font-semibold text-teal-700 transition hover:bg-teal-50"
         >
           {t.viewListing}
         </a>
@@ -126,7 +181,7 @@ export default function HomeSearch({
 
   const filteredListings = useMemo(() => {
     return initialListings.filter((listing) => {
-      if (listing.is_boosted) return false; // boosted shown separately
+      if (listing.is_boosted) return false;
       const cityMatch = selectedCity === "all" ? true : listing.city === selectedCity;
       const monthMatch = doesListingMatchSelectedMonths(listing.start_date, listing.end_date, selectedMonths);
       return cityMatch && monthMatch;
@@ -146,26 +201,24 @@ export default function HomeSearch({
 
   return (
     <>
-      {/* Hero */}
       <section
         className="relative h-[70vh] min-h-[500px] w-full bg-cover bg-center"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80')" }}
       >
-        <div className="absolute inset-0 bg-[#1E3A5F]/60" />
+        <div className="absolute inset-0 bg-[#0e4a52]/65" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
           <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Sub4U</h1>
           <p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
           <button
             type="button"
             onClick={() => document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth" })}
-            className="mt-10 inline-flex items-center rounded-full bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-blue-700"
+            className="mt-10 inline-flex items-center rounded-full bg-teal-600 px-10 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-teal-700"
           >
             {t.letsStart}
           </button>
         </div>
       </section>
 
-      {/* Search */}
       <section id="search-section" className="mx-auto max-w-7xl px-4 py-10">
         <div className="flex w-full flex-col gap-3 rounded-[2rem] bg-white p-4 shadow-2xl md:flex-row md:items-start md:gap-0">
           <div className="flex-1 px-4 py-3 text-left">
@@ -181,24 +234,23 @@ export default function HomeSearch({
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
               {monthOptions.map((month) => (
                 <label key={month} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800">
-                  <input type="checkbox" checked={selectedMonths.includes(month)} onChange={(e) => handleMonthChange(month, e.target.checked)} className="h-4 w-4 accent-blue-600" />
+                  <input type="checkbox" checked={selectedMonths.includes(month)} onChange={(e) => handleMonthChange(month, e.target.checked)} className="h-4 w-4 accent-teal-600" />
                   <span>{t.monthLabels[month as keyof typeof t.monthLabels]}</span>
                 </label>
               ))}
             </div>
           </div>
           <div className="flex items-center px-4 py-3">
-            <button type="button" onClick={handleSearch} className="w-full rounded-full bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 md:w-auto">
+            <button type="button" onClick={handleSearch} className="w-full rounded-full bg-teal-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-teal-700 md:w-auto">
               {t.search}
             </button>
           </div>
         </div>
       </section>
 
-      {/* Results */}
       <section ref={resultsRef} id="results-section" className="mx-auto max-w-7xl px-4 py-12">
 
-        {/* Boosted section — only shown when no filters applied */}
+        {/* Featured section */}
         {!filtersApplied && boostedListings.length > 0 && (
           <div className="mb-12">
             <div className="mb-6 flex items-center gap-3">
@@ -215,7 +267,6 @@ export default function HomeSearch({
           </div>
         )}
 
-        {/* All listings */}
         <div className="mb-8 flex items-center justify-between">
           <h2 className="text-3xl font-bold text-gray-900">
             {selectedCity === "all" ? t.availableSublets : `${t.subletsIn} ${selectedCity}`}
@@ -226,7 +277,7 @@ export default function HomeSearch({
         {selectedMonths.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">
             {selectedMonths.map((month) => (
-              <span key={month} className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+              <span key={month} className="rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
                 {t.monthLabels[month as keyof typeof t.monthLabels]}
               </span>
             ))}
