@@ -36,10 +36,12 @@ export default async function InboxPage(props: PageProps) {
     conv.owner_id === user.id ? conv.tenant_id : conv.owner_id
   );
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name")
-    .in("id", otherUserIds.length > 0 ? otherUserIds : ["00000000-0000-0000-0000-000000000000"]);
+ const validOtherUserIds = otherUserIds.filter(Boolean);
+
+const { data: profiles } = await supabase
+  .from("profiles")
+  .select("id, full_name")
+  .in("id", validOtherUserIds.length > 0 ? validOtherUserIds : ["00000000-0000-0000-0000-000000000000"]);
 
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]));
 
@@ -74,10 +76,10 @@ export default async function InboxPage(props: PageProps) {
                 <a
                   key={conv.id}
                   href={`/inbox/${conv.id}?lang=${lang}`}
-                  className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                  className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-teal-300 hover:shadow-md"
                 >
                   {/* Avatar with initials */}
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-600">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-600">
                     {otherUserName.charAt(0).toUpperCase()}
                   </div>
 
