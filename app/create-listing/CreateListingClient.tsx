@@ -6,7 +6,6 @@ import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
 import { useRouter } from "next/navigation";
 
-const router = useRouter();
 
 const cities = ["Tel Aviv", "Ramat Gan", "Herzliya", "Givatayim"];
 
@@ -19,6 +18,8 @@ export default function CreateListingClient({ lang }: Props) {
   const isHe = lang === "he";
 
   const supabase = createClient();
+
+  const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [city, setCity] = useState(cities[0]);
