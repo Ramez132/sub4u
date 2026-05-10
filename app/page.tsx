@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/app/components/SignOutButton";
 import HomeSearch from "@/app/components/HomeSearch";
 import { type Language, translations } from "@/lib/translations";
+
 export const dynamic = "force-dynamic";
 
 export default async function Home({
@@ -19,50 +20,50 @@ export default async function Home({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Unread message count
+  // Unread message count — only messages after last_read
   let unreadCount = 0;
   if (user) {
     const { data: conversations } = await supabase
       .from("conversations")
-      .select("id")
+      .select("id, tenant_id, owner_id, tenant_last_read, owner_last_read")
       .or(`tenant_id.eq.${user.id},owner_id.eq.${user.id}`);
 
     if (conversations && conversations.length > 0) {
-      const convIds = conversations.map((c) => c.id);
-      const { count } = await supabase
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .in("conversation_id", convIds)
-        .neq("sender_id", user.id);
-      unreadCount = count ?? 0;
+      for (const conv of conversations) {
+        const isOwner = conv.owner_id === user.id;
+        const lastRead = isOwner ? conv.owner_last_read : conv.tenant_last_read;
+
+        let query = supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", conv.id)
+          .neq("sender_id", user.id);
+
+        if (lastRead) {
+          query = query.gt("created_at", lastRead);
+        }
+
+        const { count } = await query;
+        unreadCount += count ?? 0;
+      }
     }
   }
 
   const now = new Date().toISOString();
 
-  // Fetch all listings — boosted ones first, then by newest
-  // Filter: show if boost_expires_at is null OR boost_expires_at is in the future
   const { data: listings, error } = await supabase
     .from("listings")
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Filter out expired boosts client-side to avoid Supabase query complexity
   const filteredListings = (listings ?? []).map((l) => ({
     ...l,
-    is_boosted: l.is_boosted && l.boost_expires_at && new Date(l.boost_expires_at) > new Date()
-      ? true
-      : false,
-    boost_expires_at: l.is_boosted && l.boost_expires_at && new Date(l.boost_expires_at) > new Date()
-      ? l.boost_expires_at
-      : null,
+    is_boosted: l.is_boosted && l.boost_expires_at && new Date(l.boost_expires_at) > new Date() ? true : false,
+    boost_expires_at: l.is_boosted && l.boost_expires_at && new Date(l.boost_expires_at) > new Date() ? l.boost_expires_at : null,
   }));
 
-  if (error) {
-    console.error("Failed to load listings:", error);
-  }
+  if (error) console.error("Failed to load listings:", error);
 
-  // Fetch images for all listings
   const listingIds = filteredListings.map((l) => l.id);
   let imagesByListing: Record<number, string[]> = {};
 
@@ -75,9 +76,7 @@ export default async function Home({
 
     if (images) {
       for (const img of images) {
-        if (!imagesByListing[img.listing_id]) {
-          imagesByListing[img.listing_id] = [];
-        }
+        if (!imagesByListing[img.listing_id]) imagesByListing[img.listing_id] = [];
         imagesByListing[img.listing_id].push(img.image_url);
       }
     }
@@ -87,7 +86,6 @@ export default async function Home({
     <main className="min-h-screen bg-white">
       <header className="absolute left-0 top-0 z-20 w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-
           {user ? (
             <a
               href={`/inbox?lang=${lang}`}
@@ -111,43 +109,29 @@ export default async function Home({
             <div className="flex overflow-hidden rounded-full border border-gray-300 bg-white/90 text-sm font-semibold">
               <form method="GET">
                 <input type="hidden" name="lang" value="en" />
-                <button type="submit" className={`px-4 py-2 transition ${lang === "en" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
-                  ENG
-                </button>
+                <button type="submit" className={`px-4 py-2 transition ${lang === "en" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}>ENG</button>
               </form>
               <div className="w-px bg-gray-300" />
               <form method="GET">
                 <input type="hidden" name="lang" value="he" />
-                <button type="submit" className={`px-4 py-2 transition ${lang === "he" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}>
-                  עבר
-                </button>
+                <button type="submit" className={`px-4 py-2 transition ${lang === "he" ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}>עבר</button>
               </form>
             </div>
 
             {user ? (
               <>
-                <a href={`/my-account?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">
-                  {t.myAccount}
-                </a>
-                <a href={`/create-listing?lang=${lang}`} className="rounded-full bg-teal-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
-                  {t.createListing}
-                </a>
+                <a href={`/my-account?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{t.myAccount}</a>
+                <a href={`/create-listing?lang=${lang}`} className="rounded-full bg-teal-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">{t.createListing}</a>
                 <SignOutButton />
               </>
             ) : (
-              <a href={`/sign-in?lang=${lang}&mode=signin`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">
-                {t.signIn}
-              </a>
+              <a href={`/sign-in?lang=${lang}&mode=signin`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{t.signIn}</a>
             )}
           </nav>
         </div>
       </header>
 
-      <HomeSearch
-        initialListings={filteredListings}
-        imagesByListing={imagesByListing}
-        lang={lang}
-      />
+      <HomeSearch initialListings={filteredListings} imagesByListing={imagesByListing} lang={lang} />
     </main>
   );
 }

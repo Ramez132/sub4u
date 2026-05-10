@@ -107,7 +107,7 @@ export default async function ListingPage(props: PageProps) {
             {/* Title + location */}
             <div className="mb-6">
               {listing.is_boosted && (
-                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-600">
+                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-600">
                   ⚡ {isHe ? "ממומן" : "Featured"}
                 </span>
               )}
@@ -115,7 +115,7 @@ export default async function ListingPage(props: PageProps) {
                 {listing.title}
               </h1>
               <p className="flex items-center gap-2 text-base text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                   <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-2.013 3.5-4.697 3.5-8.327a8 8 0 10-16 0c0 3.63 1.556 6.314 3.5 8.327a19.58 19.58 0 002.683 2.282 16.975 16.975 0 001.144.742z" clipRule="evenodd" />
                 </svg>
                 {listing.city}{listing.neighborhood ? `, ${listing.neighborhood}` : ""}
@@ -179,7 +179,7 @@ export default async function ListingPage(props: PageProps) {
                   {existingConversationId ? (
                     <a
                       href={`/inbox/${existingConversationId}?lang=${lang}`}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -195,14 +195,14 @@ export default async function ListingPage(props: PageProps) {
               {!user && (
                 <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center text-sm text-gray-500">
                   {isHe ? "התחבר כדי לשלוח הודעה" : "Sign in to message the renter"}{" "}
-                  <a href={`/sign-in?lang=${lang}&mode=signin`} className="font-semibold text-orange-500 hover:underline">
+                  <a href={`/sign-in?lang=${lang}&mode=signin`} className="font-semibold text-teal-600 hover:underline">
                     {isHe ? "התחברות" : "Sign in"}
                   </a>
                 </div>
               )}
 
               {isOwner && (
-                <div className="rounded-2xl bg-orange-50 px-4 py-3 text-center text-sm font-medium text-orange-600">
+                <div className="rounded-2xl bg-orange-50 px-4 py-3 text-center text-sm font-medium text-teal-600">
                   {isHe ? "זו המודעה שלך" : "This is your listing"}
                 </div>
               )}

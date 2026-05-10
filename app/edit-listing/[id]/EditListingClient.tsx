@@ -89,7 +89,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
                 required
               />
             </div>
@@ -101,7 +101,7 @@ export default function EditListingClient({ listing, lang }: Props) {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
               >
                 {cities.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -115,7 +115,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                 type="text"
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
               />
             </div>
 
@@ -127,7 +127,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
                 required
               />
             </div>
@@ -140,7 +140,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
               />
             </div>
 
@@ -153,7 +153,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
                   required
                 />
               </div>
@@ -165,7 +165,7 @@ export default function EditListingClient({ listing, lang }: Props) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
                   required
                 />
               </div>
@@ -181,7 +181,7 @@ export default function EditListingClient({ listing, lang }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                className="rounded-full bg-teal-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-60"
               >
                 {loading
                   ? (isHe ? "שומר..." : "Saving...")

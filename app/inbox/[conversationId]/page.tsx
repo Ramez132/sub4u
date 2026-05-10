@@ -26,6 +26,7 @@ function ConversationInner() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -40,7 +41,6 @@ function ConversationInner() {
       if (!user) { router.push(`/sign-in?lang=${lang}&mode=signin`); return; }
       setUserId(user.id);
 
-      // Load conversation + listing
       const { data: conv } = await supabase
         .from("conversations")
         .select("tenant_id, owner_id, listings ( title )")
@@ -52,14 +52,15 @@ function ConversationInner() {
       const listing = (Array.isArray(conv.listings) ? conv.listings[0] : conv.listings) as { title: string } | null;
       if (listing?.title) setListingTitle(listing.title);
 
-      // Figure out who the other user is
-      const otherUserId = conv.owner_id === user.id ? conv.tenant_id : conv.owner_id;
+      const ownerFlag = conv.owner_id === user.id;
+      setIsOwner(ownerFlag);
+      const otherUserId = ownerFlag ? conv.tenant_id : conv.owner_id;
 
-      // Load both profiles
+      // Load profiles
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name, email")
-        .in("id", [user.id, otherUserId]);
+        .in("id", [user.id, otherUserId].filter(Boolean));
 
       const myProfile = profiles?.find((p) => p.id === user.id);
       const otherProfile = profiles?.find((p) => p.id === otherUserId);
@@ -76,6 +77,13 @@ function ConversationInner() {
         .order("created_at", { ascending: true });
 
       setMessages(msgs ?? []);
+
+      // Mark as read — update the last_read timestamp for this user
+      const readField = ownerFlag ? "owner_last_read" : "tenant_last_read";
+      await supabase
+        .from("conversations")
+        .update({ [readField]: new Date().toISOString() })
+        .eq("id", conversationId);
     }
     load();
   }, [conversationId]);
@@ -86,20 +94,21 @@ function ConversationInner() {
       .channel(`messages:${conversationId}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        async (payload) => {
           setMessages((prev) => [...prev, payload.new as Message]);
+          // Mark as read when new message arrives and you're viewing the chat
+          const readField = isOwner ? "owner_last_read" : "tenant_last_read";
+          await supabase
+            .from("conversations")
+            .update({ [readField]: new Date().toISOString() })
+            .eq("id", conversationId);
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId]);
+  }, [conversationId, isOwner]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,7 +125,6 @@ function ConversationInner() {
     });
 
     if (!error && otherUserEmail) {
-      // Send email notification
       await fetch("/api/notify-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,28 +144,17 @@ function ConversationInner() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }
 
   function formatTime(dateStr: string) {
-    return new Date(dateStr).toLocaleTimeString(isHe ? "he-IL" : "en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(dateStr).toLocaleTimeString(isHe ? "he-IL" : "en-US", { hour: "2-digit", minute: "2-digit" });
   }
 
   return (
     <div className="flex h-screen flex-col" dir={isHe ? "rtl" : "ltr"}>
-      <PageHeader
-        title={otherUserName || listingTitle || t.conversation}
-        lang={lang}
-        backHref="/inbox"
-      />
+      <PageHeader title={otherUserName || listingTitle || t.conversation} lang={lang} backHref="/inbox" />
 
-      {/* Listing subtitle */}
       {listingTitle && (
         <div className="border-b border-gray-100 bg-white px-4 py-2 text-center text-xs text-gray-400">
           {isHe ? "בנוגע ל: " : "Re: "}{listingTitle}
@@ -169,28 +166,21 @@ function ConversationInner() {
           {messages.length === 0 && (
             <p className="text-center text-sm text-gray-400">{t.startConversation}</p>
           )}
-
           {messages.map((msg) => {
             const isMine = msg.sender_id === userId;
             return (
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {!isMine && (
-                  <div className="mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-orange-600">
+                  <div className="mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-600">
                     {otherUserName.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  isMine
-                    ? "rounded-br-sm bg-blue-600 text-white"
-                    : "rounded-bl-sm border border-gray-200 bg-white text-gray-900"
+                  isMine ? "rounded-br-sm bg-teal-600 text-white" : "rounded-bl-sm border border-gray-200 bg-white text-gray-900"
                 }`}>
-                  {!isMine && (
-                    <p className="mb-1 text-xs font-semibold text-blue-600">{otherUserName}</p>
-                  )}
+                  {!isMine && <p className="mb-1 text-xs font-semibold text-teal-500">{otherUserName}</p>}
                   <p>{msg.content}</p>
-                  <p className={`mt-1 text-right text-xs ${isMine ? "text-blue-200" : "text-gray-400"}`}>
-                    {formatTime(msg.created_at)}
-                  </p>
+                  <p className={`mt-1 text-right text-xs ${isMine ? "text-teal-200" : "text-gray-400"}`}>{formatTime(msg.created_at)}</p>
                 </div>
               </div>
             );
@@ -207,16 +197,15 @@ function ConversationInner() {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t.typeMessage}
-            className="flex-1 rounded-full border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500"
+            className="flex-1 rounded-full border border-gray-300 px-4 py-3 text-sm outline-none focus:border-teal-500"
           />
           <button
             onClick={handleSend}
             disabled={sending || !newMessage.trim()}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition hover:bg-teal-700 disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </button>
         </div>
