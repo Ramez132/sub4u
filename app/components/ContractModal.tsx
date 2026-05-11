@@ -2,20 +2,26 @@
 
 import { useState, useRef, useEffect } from "react";
 import { type Language } from "@/lib/translations";
+import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   onClose: () => void;
+  onSigned?: () => void;
   lang: Language;
+  userId?: string;
+  readOnly?: boolean; // show contract without requiring signature
 };
 
-export default function ContractModal({ onClose, lang }: Props) {
+export default function ContractModal({ onClose, onSigned, lang, userId, readOnly = false }: Props) {
   const isHe = lang === "he";
+  const supabase = createClient();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [signMode, setSignMode] = useState<"draw" | "type">("draw");
   const [typedName, setTypedName] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,6 +78,34 @@ export default function ContractModal({ onClose, lang }: Props) {
 
   const canSubmit = agreed && (signMode === "draw" ? hasSigned : typedName.trim().length > 0);
 
+  async function handleConfirm() {
+    if (!canSubmit) return;
+    setSaving(true);
+
+    // Get signature value
+    let signatureValue = "";
+    if (signMode === "draw") {
+      signatureValue = canvasRef.current?.toDataURL() ?? "";
+    } else {
+      signatureValue = typedName.trim();
+    }
+
+    // Save to profiles if userId provided
+    if (userId) {
+      await supabase
+        .from("profiles")
+        .update({
+          contract_signed_at: new Date().toISOString(),
+          contract_signature: signatureValue,
+        })
+        .eq("id", userId);
+    }
+
+    setSaving(false);
+    onSigned?.();
+    onClose();
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
       <div
@@ -108,75 +142,88 @@ export default function ContractModal({ onClose, lang }: Props) {
             )}
           </div>
 
-          {/* Signature section */}
-          <div className="mt-6">
-            <p className="mb-3 text-sm font-semibold text-gray-800">
-              {isHe ? "חתימה" : "Signature"}
-            </p>
-            <div className="mb-4 flex gap-2">
-              <button onClick={() => setSignMode("draw")}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${signMode === "draw" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-                {isHe ? "✍️ ציור חתימה" : "✍️ Draw signature"}
-              </button>
-              <button onClick={() => setSignMode("type")}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${signMode === "type" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-                {isHe ? "⌨️ הקלדת שם" : "⌨️ Type name"}
-              </button>
-            </div>
-
-            {signMode === "draw" ? (
-              <div>
-                <canvas
-                  ref={canvasRef}
-                  width={560}
-                  height={140}
-                  className="w-full cursor-crosshair rounded-2xl border-2 border-dashed border-gray-300 bg-white touch-none"
-                  onMouseDown={startDraw}
-                  onMouseMove={draw}
-                  onMouseUp={stopDraw}
-                  onMouseLeave={stopDraw}
-                  onTouchStart={startDraw}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDraw}
-                />
-                <div className="mt-2 flex justify-between">
-                  <p className="text-xs text-gray-400">{isHe ? "חתום כאן בעזרת העכבר או האצבע" : "Sign here using mouse or finger"}</p>
-                  <button onClick={clearCanvas} className="text-xs text-teal-600 hover:underline">{isHe ? "נקה" : "Clear"}</button>
+          {/* Signature section — hidden in readOnly mode */}
+          {!readOnly && (
+            <>
+              <div className="mt-6">
+                <p className="mb-3 text-sm font-semibold text-gray-800">
+                  {isHe ? "חתימה" : "Signature"}
+                </p>
+                <div className="mb-4 flex gap-2">
+                  <button onClick={() => setSignMode("draw")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${signMode === "draw" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {isHe ? "✍️ ציור חתימה" : "✍️ Draw signature"}
+                  </button>
+                  <button onClick={() => setSignMode("type")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${signMode === "type" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {isHe ? "⌨️ הקלדת שם" : "⌨️ Type name"}
+                  </button>
                 </div>
-              </div>
-            ) : (
-              <div>
-                <input
-                  type="text"
-                  value={typedName}
-                  onChange={(e) => setTypedName(e.target.value)}
-                  placeholder={isHe ? "הקלד את שמך המלא" : "Type your full name"}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-lg italic outline-none focus:border-teal-500"
-                  style={{ fontFamily: "Georgia, serif" }}
-                />
-                <p className="mt-1 text-xs text-gray-400">{isHe ? "שמך המלא ישמש כחתימה" : "Your full name will serve as your signature"}</p>
-              </div>
-            )}
-          </div>
 
-          <label className="mt-5 flex cursor-pointer items-start gap-3">
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 accent-teal-600" />
-            <span className="text-sm text-gray-700">
-              {isHe ? "אני מסכים/ה לתנאי השימוש של Sub4U ומאשר/ת כי קראתי את החוזה" : "I agree to the Sub4U terms of service and confirm that I have read the contract"}
-            </span>
-          </label>
+                {signMode === "draw" ? (
+                  <div>
+                    <canvas
+                      ref={canvasRef}
+                      width={560}
+                      height={140}
+                      className="w-full cursor-crosshair rounded-2xl border-2 border-dashed border-gray-300 bg-white touch-none"
+                      onMouseDown={startDraw}
+                      onMouseMove={draw}
+                      onMouseUp={stopDraw}
+                      onMouseLeave={stopDraw}
+                      onTouchStart={startDraw}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDraw}
+                    />
+                    <div className="mt-2 flex justify-between">
+                      <p className="text-xs text-gray-400">{isHe ? "חתום כאן בעזרת העכבר או האצבע" : "Sign here using mouse or finger"}</p>
+                      <button onClick={clearCanvas} className="text-xs text-teal-600 hover:underline">{isHe ? "נקה" : "Clear"}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      value={typedName}
+                      onChange={(e) => setTypedName(e.target.value)}
+                      placeholder={isHe ? "הקלד את שמך המלא" : "Type your full name"}
+                      className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-lg italic outline-none focus:border-teal-500"
+                      style={{ fontFamily: "Georgia, serif" }}
+                    />
+                    <p className="mt-1 text-xs text-gray-400">{isHe ? "שמך המלא ישמש כחתימה" : "Your full name will serve as your signature"}</p>
+                  </div>
+                )}
+              </div>
+
+              <label className="mt-5 flex cursor-pointer items-start gap-3">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 accent-teal-600" />
+                <span className="text-sm text-gray-700">
+                  {isHe ? "אני מסכים/ה לתנאי השימוש של Sub4U ומאשר/ת כי קראתי את החוזה" : "I agree to the Sub4U terms of service and confirm that I have read the contract"}
+                </span>
+              </label>
+            </>
+          )}
         </div>
 
         {/* Footer */}
         <div className="border-t border-gray-100 px-6 py-4">
-          <button onClick={onClose} disabled={!canSubmit}
-            className="w-full rounded-full bg-teal-600 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-40">
-            {isHe ? "אישור וסגירה" : "Confirm & Close"}
-          </button>
-          {!canSubmit && (
-            <p className="mt-2 text-center text-xs text-gray-400">
-              {isHe ? "יש לחתום ולסמן את תיבת האישור" : "Please sign and check the agreement box"}
-            </p>
+          {readOnly ? (
+            <button onClick={onClose}
+              className="w-full rounded-full bg-gray-100 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-200">
+              {isHe ? "סגירה" : "Close"}
+            </button>
+          ) : (
+            <>
+              <button onClick={handleConfirm} disabled={!canSubmit || saving}
+                className="w-full rounded-full bg-teal-600 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-40">
+                {saving ? (isHe ? "שומר..." : "Saving...") : (isHe ? "אישור וסגירה" : "Confirm & Close")}
+              </button>
+              {!canSubmit && (
+                <p className="mt-2 text-center text-xs text-gray-400">
+                  {isHe ? "יש לחתום ולסמן את תיבת האישור" : "Please sign and check the agreement box"}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

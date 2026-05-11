@@ -7,7 +7,6 @@ import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
 import ContractModal from "@/app/components/ContractModal";
 
-// ── Main Sign In Page ────────────────────────────────────────────────────────
 function SignInInner() {
   const supabase = createClient();
   const searchParams = useSearchParams();
@@ -29,6 +28,8 @@ function SignInInner() {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [showContract, setShowContract] = useState(false);
+  const [contractSigned, setContractSigned] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
 
   async function handleSignUp() {
     setLoading(true);
@@ -53,7 +54,12 @@ function SignInInner() {
     }
 
     const { error: profileError } = await supabase.from("profiles").insert({
-      id: userId, email, full_name: fullName, phone_number: phoneNumber, id_number: idNumber,
+      id: userId,
+      email,
+      full_name: fullName,
+      phone_number: phoneNumber,
+      id_number: idNumber,
+      contract_signed_at: contractSigned ? new Date().toISOString() : null,
     });
 
     setMessage(profileError ? t.accountCreatedProfileFailed : t.accountCreated);
@@ -81,7 +87,14 @@ function SignInInner() {
 
   return (
     <>
-      {showContract && <ContractModal onClose={() => setShowContract(false)} lang={lang} />}
+      {showContract && (
+        <ContractModal
+          onClose={() => setShowContract(false)}
+          onSigned={() => setContractSigned(true)}
+          lang={lang}
+          userId={pendingUserId ?? undefined}
+        />
+      )}
 
       <PageHeader
         title={mode === "signup" ? t.createAccount : t.signIn}
@@ -128,17 +141,27 @@ function SignInInner() {
 
               {message && <div className="rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-700">{message}</div>}
 
+              {/* Contract signed indicator */}
+              {contractSigned && (
+                <div className="flex items-center gap-2 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+                  ✅ {isHe ? "החוזה נחתם בהצלחה" : "Contract signed successfully"}
+                </div>
+              )}
+
               <div className="flex gap-3">
-                {/* Contract button */}
                 <button
                   type="button"
                   onClick={() => setShowContract(true)}
-                  className="flex-1 rounded-full border border-teal-600 px-6 py-3 text-sm font-semibold text-teal-700 transition hover:bg-teal-50"
+                  className={`flex-1 rounded-full border px-6 py-3 text-sm font-semibold transition ${
+                    contractSigned
+                      ? "border-green-500 text-green-700 hover:bg-green-50"
+                      : "border-teal-600 text-teal-700 hover:bg-teal-50"
+                  }`}
                 >
-                  {isHe ? "📄 חוזה" : "📄 Contract"}
+                  {contractSigned
+                    ? (isHe ? "✅ חוזה" : "✅ Contract")
+                    : (isHe ? "📄 חוזה" : "📄 Contract")}
                 </button>
-
-                {/* Create account button */}
                 <button type="button" onClick={handleSignUp} disabled={loading}
                   className="flex-1 rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-60">
                   {loading ? t.pleaseWait : t.createAccount}

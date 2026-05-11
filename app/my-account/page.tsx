@@ -45,7 +45,7 @@ export default async function MyAccountPage(props: PageProps) {
     if (!user) redirect("/sign-in");
     const listingId = Number(formData.get("listingId"));
     const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 12);
+    expires.setDate(expires.getDate() + 3);
     await supabase
       .from("listings")
       .update({ is_boosted: true, boost_expires_at: expires.toISOString() })
@@ -78,6 +78,7 @@ export default async function MyAccountPage(props: PageProps) {
         <div className="mx-auto max-w-5xl space-y-6">
 
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Personal info */}
             <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="mb-6 text-2xl font-semibold text-gray-900">
                 {isHe ? "פרטים אישיים" : "Personal Information"}
@@ -90,6 +91,7 @@ export default async function MyAccountPage(props: PageProps) {
               </div>
             </section>
 
+            {/* Payment methods */}
             <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="mb-6 text-2xl font-semibold text-gray-900">
                 {isHe ? "אמצעי תשלום" : "Payment Methods"}
@@ -98,13 +100,19 @@ export default async function MyAccountPage(props: PageProps) {
             </section>
           </div>
 
+          {/* Documents / Contract */}
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-6 text-2xl font-semibold text-gray-900">
-                {isHe ? "מסמכים" : "Documents"}
-              </h2>
-              <ContractButton lang={lang} />
-            </section>
+            <h2 className="mb-6 text-2xl font-semibold text-gray-900">
+              {isHe ? "מסמכים" : "Documents"}
+            </h2>
+            <ContractButton
+              lang={lang}
+              userId={user.id}
+              contractSignedAt={profile?.contract_signed_at ?? null}
+            />
+          </section>
 
+          {/* My listings */}
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="mb-6 text-2xl font-semibold text-gray-900">
               {isHe ? "המודעות שלי" : "My Listings"}
@@ -113,16 +121,13 @@ export default async function MyAccountPage(props: PageProps) {
             {listings && listings.length > 0 ? (
               <div className="space-y-4">
                 {listings.map((listing) => (
-                  <div
-                    key={listing.id}
-                    className="rounded-2xl border border-gray-200 px-5 py-4 transition hover:border-gray-300 hover:bg-gray-50"
-                  >
+                  <div key={listing.id} className="rounded-2xl border border-gray-200 px-5 py-4 transition hover:border-gray-300 hover:bg-gray-50">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-lg font-semibold text-gray-900">{listing.title}</h3>
                           {listing.is_boosted && listing.boost_expires_at && (
-                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600">
+                            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600">
                               {isHe ? "ממומן 🚀" : "Boosted 🚀"}
                             </span>
                           )}
@@ -130,51 +135,27 @@ export default async function MyAccountPage(props: PageProps) {
                         <p className="mt-0.5 text-sm text-gray-500">
                           {listing.city}{listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
                         </p>
-                        <p className="text-sm text-gray-400">
-                          {listing.start_date} → {listing.end_date}
-                        </p>
+                        <p className="text-sm text-gray-400">{listing.start_date} → {listing.end_date}</p>
                       </div>
-
-                      <div className="text-lg font-bold text-blue-600">
-                        ₪{listing.price.toLocaleString()}
-                      </div>
+                      <div className="text-lg font-bold text-teal-600">₪{listing.price.toLocaleString()}</div>
                     </div>
 
-                    {/* Action buttons */}
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {/* View */}
-                      <a
-                        href={`/listings/${listing.id}?lang=${lang}&from=account`}
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                      >
+                      <a href={`/listings/${listing.id}?lang=${lang}&from=account`}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
                         {isHe ? "צפה" : "View"}
                       </a>
-
-                      {/* Edit */}
-                      <a
-                        href={`/edit-listing/${listing.id}?lang=${lang}`}
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                      >
+                      <a href={`/edit-listing/${listing.id}?lang=${lang}`}
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
                         {isHe ? "ערוך" : "Edit"}
                       </a>
-
-                      {/* Boost */}
                       <form action={boostListing}>
                         <input type="hidden" name="listingId" value={listing.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                        >
+                        <button type="submit" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
                           {isHe ? "קדם 🚀" : "Boost 🚀"}
                         </button>
                       </form>
-
-                      {/* Delete */}
-                      <DeleteListingButton
-                        listingId={listing.id}
-                        deleteAction={deleteListing}
-                        isHe={isHe}
-                      />
+                      <DeleteListingButton listingId={listing.id} deleteAction={deleteListing} isHe={isHe} />
                     </div>
                   </div>
                 ))}
