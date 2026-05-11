@@ -4,6 +4,7 @@ import PageHeader from "@/app/components/PageHeader";
 import { revalidatePath } from "next/cache";
 import { translations, type Language } from "@/lib/translations";
 import DeleteListingButton from "@/app/components/DeleteListingButton";
+import ContractButton from "@/app/components/ContractButton";
 
 function maskIdNumber(idNumber: string) {
   if (!idNumber) return "";
@@ -44,7 +45,7 @@ export default async function MyAccountPage(props: PageProps) {
     if (!user) redirect("/sign-in");
     const listingId = Number(formData.get("listingId"));
     const expires = new Date();
-    expires.setDate(expires.getDate() + 3);
+    expires.setMinutes(expires.getMinutes() + 12);
     await supabase
       .from("listings")
       .update({ is_boosted: true, boost_expires_at: expires.toISOString() })
@@ -98,6 +99,13 @@ export default async function MyAccountPage(props: PageProps) {
           </div>
 
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 text-2xl font-semibold text-gray-900">
+                {isHe ? "מסמכים" : "Documents"}
+              </h2>
+              <ContractButton lang={lang} />
+            </section>
+
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="mb-6 text-2xl font-semibold text-gray-900">
               {isHe ? "המודעות שלי" : "My Listings"}
             </h2>
@@ -114,7 +122,7 @@ export default async function MyAccountPage(props: PageProps) {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-lg font-semibold text-gray-900">{listing.title}</h3>
                           {listing.is_boosted && listing.boost_expires_at && (
-                            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600">
+                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600">
                               {isHe ? "ממומן 🚀" : "Boosted 🚀"}
                             </span>
                           )}
@@ -127,7 +135,7 @@ export default async function MyAccountPage(props: PageProps) {
                         </p>
                       </div>
 
-                      <div className="text-lg font-bold text-teal-600">
+                      <div className="text-lg font-bold text-blue-600">
                         ₪{listing.price.toLocaleString()}
                       </div>
                     </div>
@@ -155,7 +163,7 @@ export default async function MyAccountPage(props: PageProps) {
                         <input type="hidden" name="listingId" value={listing.id} />
                         <button
                           type="submit"
-                          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700"
+                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                         >
                           {isHe ? "קדם 🚀" : "Boost 🚀"}
                         </button>

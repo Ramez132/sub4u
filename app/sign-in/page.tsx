@@ -5,15 +5,18 @@ import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
+import ContractModal from "@/app/components/ContractModal";
 
+// ── Main Sign In Page ────────────────────────────────────────────────────────
 function SignInInner() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const lang: Language = searchParams.get("lang") === "he" ? "he" : "en";
   const t = translations[lang];
+  const isHe = lang === "he";
 
   const [mode, setMode] = useState<"signup" | "signin">(
-    searchParams.get("mode") === "signin" ? "signin" : "signup"
+    searchParams.get("mode") === "signup" ? "signup" : "signin"
   );
 
   const [email, setEmail] = useState("");
@@ -25,6 +28,7 @@ function SignInInner() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [showContract, setShowContract] = useState(false);
 
   async function handleSignUp() {
     setLoading(true);
@@ -77,13 +81,15 @@ function SignInInner() {
 
   return (
     <>
+      {showContract && <ContractModal onClose={() => setShowContract(false)} lang={lang} />}
+
       <PageHeader
         title={mode === "signup" ? t.createAccount : t.signIn}
         lang={lang}
         backHref="/"
       />
 
-      <main className="min-h-screen bg-white px-4 py-12" dir={lang === "he" ? "rtl" : "ltr"}>
+      <main className="min-h-screen bg-white px-4 py-12" dir={isHe ? "rtl" : "ltr"}>
         <div className="mx-auto max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="mb-8 flex gap-3">
             <button type="button" onClick={() => { setMode("signup"); setMessage(""); }}
@@ -119,24 +125,42 @@ function SignInInner() {
                 <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder={t.idNumber}
                   className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500" />
               </div>
+
               {message && <div className="rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-700">{message}</div>}
-              <button type="button" onClick={handleSignUp} disabled={loading}
-                className="w-full rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-60">
-                {loading ? t.pleaseWait : t.createAccount}
-              </button>
+
+              <div className="flex gap-3">
+                {/* Contract button */}
+                <button
+                  type="button"
+                  onClick={() => setShowContract(true)}
+                  className="flex-1 rounded-full border border-teal-600 px-6 py-3 text-sm font-semibold text-teal-700 transition hover:bg-teal-50"
+                >
+                  {isHe ? "📄 חוזה" : "📄 Contract"}
+                </button>
+
+                {/* Create account button */}
+                <button type="button" onClick={handleSignUp} disabled={loading}
+                  className="flex-1 rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-60">
+                  {loading ? t.pleaseWait : t.createAccount}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-5">
               <h1 className="text-3xl font-bold text-gray-900">{t.signIn}</h1>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">{t.email}</label>
-                <input type="email" value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)} placeholder="you@example.com"
+                <input type="email" value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") sendOtpCode(); }}
+                  placeholder="you@example.com"
                   className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500" />
               </div>
               {otpSent && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">{t.pinCode}</label>
-                  <input type="text" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder={t.enterPinCode}
+                  <input type="text" value={otpCode} onChange={(e) => setOtpCode(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") verifyOtpCode(); }}
+                    placeholder={t.enterPinCode}
                     className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500" />
                 </div>
               )}
