@@ -1,21 +1,36 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
+import { createClient } from "@/lib/supabase/client";
 
 function ContactInner() {
   const searchParams = useSearchParams();
   const lang: Language = searchParams.get("lang") === "he" ? "he" : "en";
-  const t = translations[lang];
   const isHe = lang === "he";
 
+  const supabase = createClient();
+
   const [email, setEmail] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+
+  // Load signed-in user's email
+  useEffect(() => {
+    async function loadUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+        setEmail(user.email);
+      }
+    }
+    loadUser();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,24 +80,32 @@ function ContactInner() {
                   {isHe ? "צור קשר" : "Contact Us"}
                 </h1>
                 <p className="text-gray-500 text-sm mb-8">
-                  {isHe
-                    ? "יש לך שאלה? נשמח לעזור."
-                    : "Have a question? We'd love to help."}
+                  {isHe ? "יש לך שאלה? נשמח לעזור." : "Have a question? We'd love to help."}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Email — read only if signed in */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       {isHe ? "אימייל" : "Email"}
                     </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
-                    />
+                    {userEmail ? (
+                      <div className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                        <span className="text-gray-700 text-sm">{userEmail}</span>
+                        <span className="ml-auto text-xs text-gray-400">
+                          {isHe ? "מחובר" : "Signed in"}
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        required
+                        className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                      />
+                    )}
                   </div>
 
                   <div>
