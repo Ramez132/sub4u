@@ -13,6 +13,7 @@ export default async function Home({
   const params = searchParams ? await searchParams : undefined;
   const lang: Language = params?.lang === "he" ? "he" : "en";
   const t = translations[lang];
+  const isHe = lang === "he";
 
   const supabase = await createClient();
 
@@ -121,11 +122,15 @@ export default async function Home({
             {user ? (
               <>
                 <a href={`/my-account?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{t.myAccount}</a>
+                <a href={`/contact?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{isHe ? "צור קשר" : "Contact"}</a>
                 <a href={`/create-listing?lang=${lang}`} className="rounded-full bg-teal-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">{t.createListing}</a>
                 <SignOutButton />
               </>
             ) : (
-              <a href={`/sign-in?lang=${lang}&mode=signin`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{t.signIn}</a>
+              <>
+                <a href={`/contact?lang=${lang}`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{isHe ? "צור קשר" : "Contact"}</a>
+                <a href={`/sign-in?lang=${lang}&mode=signin`} className="rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-white">{t.signIn}</a>
+              </>
             )}
           </nav>
         </div>
