@@ -248,6 +248,16 @@ export default function HomeSearch({
         </div>
       </section>
 
+      {/* About section */}
+<section className="mx-auto max-w-4xl px-4 py-16 text-center" dir={lang === "he" ? "rtl" : "ltr"}>
+  <h2 className="mb-6 text-3xl font-bold text-gray-900">{t.aboutTitle}</h2>
+  <div className="space-y-4 text-gray-600 leading-relaxed text-base">
+    {t.aboutText.split("\n\n").map((paragraph, i) => (
+      <p key={i}>{paragraph}</p>
+    ))}
+  </div>
+</section>
+
       <section ref={resultsRef} id="results-section" className="mx-auto max-w-7xl px-4 py-12">
 
         {/* Featured section */}

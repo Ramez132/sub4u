@@ -84,6 +84,9 @@ export const translations = {
     delete: "Delete",
     sure: "Sure?",
 
+    aboutTitle: "About Sub4U",
+    aboutText: "Sub4U was founded from our personal experience as students, after long weeks of searching for sublets through Facebook, WhatsApp and unreliable listings. But we quickly realized the problem isn't just finding an apartment — it's everything that happens after the deal is closed. Uncertainty, cancellations, broken commitments and a lack of real protection for either the tenant or the landlord.\n\nThat's why we built Sub4U not just as a platform for finding sublets, but as a complete system that provides security and order throughout the entire process.\n\nSublets on the site are conducted through a formal contract between the parties, including clear terms and commitments. In case of a breach, we assist in mediating and acting against the other party, so users don't have to face it alone.\n\nOur goal is to make the sublet world in Israel simpler, safer and more accessible.",
+
     // Sign in / Sign up
     signUp: "Sign up",
     createAccount: "Create account",
@@ -218,6 +221,9 @@ export const translations = {
     signedInSuccess: "התחברת בהצלחה.",
     accountCreated: "החשבון נוצר. אנא אמת את כתובת האימייל שלך.",
     accountCreatedProfileFailed: "החשבון נוצר, אך שמירת הפרופיל נכשלה.",
+
+    aboutTitle: "אודות Sub4U",
+    aboutText: "Sub4U הוקם מתוך חוויה אישית שלנו כסטודנטים, אחרי שבועות ארוכים של חיפוש סאבלטים דרך פייסבוק, וואטסאפ ומודעות לא אמינות. אבל מהר מאוד הבנו שהבעיה היא לא רק למצוא דירה, אלא גם כל מה שקורה אחרי שסוגרים. חוסר ודאות, ביטולים, אי עמידה בהתחייבויות וחוסר הגנה אמיתית על השוכר או המשכיר.\n\nלכן הקמנו את Sub4U לא רק כפלטפורמה למציאת סאבלטים, אלא כמערכת מלאה שמעניקה ביטחון וסדר לאורך כל התהליך.\n\nהסאבלטים באתר מתבצעים באמצעות חוזה מסודר בין הצדדים, הכולל תנאים והתחייבויות ברורות. במקרה של הפרת התחייבות, אנו מסייעים בליווי ובפעולה מול הצד השני, כדי שהמשתמשים לא יצטרכו להתמודד לבד.\n\nהמטרה שלנו היא להפוך את עולם הסאבלטים בישראל לפשוט, בטוח ונגיש יותר.",
 
     // Inbox
     inbox: "תיבת הודעות",
