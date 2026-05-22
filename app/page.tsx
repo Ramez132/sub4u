@@ -85,10 +85,27 @@ export default async function Home({
     <main className="min-h-screen bg-white">
       <header className="absolute left-0 top-0 z-20 w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-          {/* Logo */}
-          <a href="/" className="text-2xl font-bold text-white drop-shadow">Sub4U</a>
+          {/* Left side: inbox when signed in, logo when signed out */}
+          {user ? (
+            <a
+              href={`/inbox?lang=${lang}`}
+              className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow transition hover:bg-white"
+              title="Inbox"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </a>
+          ) : (
+            <a href="/" className="text-2xl font-bold text-white drop-shadow">Sub4U</a>
+          )}
 
-          {/* Hamburger menu */}
+          {/* Right side: hamburger menu */}
           <HamburgerMenu
             lang={lang}
             isHe={isHe}
