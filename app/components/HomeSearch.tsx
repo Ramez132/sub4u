@@ -175,6 +175,8 @@ export default function HomeSearch({
 }) {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [priceFrom, setPriceFrom] = useState(0);
+  const [priceTo, setPriceTo] = useState(50000);
   const [hasSearched, setHasSearched] = useState(false);
   const t = translations[lang];
   const resultsRef = useRef<HTMLElement | null>(null);
@@ -187,9 +189,10 @@ export default function HomeSearch({
       if (listing.is_boosted) return false;
       const cityMatch = selectedCity === "all" ? true : listing.city === selectedCity;
       const monthMatch = doesListingMatchSelectedMonths(listing.start_date, listing.end_date, selectedMonths);
-      return cityMatch && monthMatch;
+      const priceMatch = listing.price >= priceFrom && listing.price <= priceTo;
+      return cityMatch && monthMatch && priceMatch;
     });
-  }, [initialListings, selectedCity, selectedMonths]);
+  }, [initialListings, selectedCity, selectedMonths, priceFrom, priceTo]);
 
   const handleMonthChange = (month: string, checked: boolean) => {
     setSelectedMonths((prev) => checked ? [...prev, month] : prev.filter((m) => m !== month));
@@ -200,7 +203,7 @@ export default function HomeSearch({
     setTimeout(() => { resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
   };
 
-  const filtersApplied = selectedCity !== "all" || selectedMonths.length > 0;
+  const filtersApplied = selectedCity !== "all" || selectedMonths.length > 0 || priceFrom > 0 || priceTo < 50000;
 
   return (
     <>
@@ -208,10 +211,10 @@ export default function HomeSearch({
         className="relative h-[70vh] min-h-[500px] w-full bg-cover bg-center"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80')" }}
       >
-        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-[#0e4a52]/65" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
           <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Sub4U</h1>
-<p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
+          <p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
           <button
             type="button"
             onClick={() => document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth" })}
@@ -241,6 +244,29 @@ export default function HomeSearch({
                   <span>{t.monthLabels[month as keyof typeof t.monthLabels]}</span>
                 </label>
               ))}
+            </div>
+          </div>
+          <div className="hidden h-24 w-px bg-gray-200 md:block" />
+          <div className="flex-1 px-4 py-3 text-left">
+            <label className="mb-2 block text-sm font-medium text-gray-500">{isHe ? "מחיר (₪)" : "Price (₪)"}</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={priceFrom}
+                onChange={(e) => setPriceFrom(Number(e.target.value))}
+                placeholder="0"
+                min={0}
+                className="w-full bg-transparent text-base text-gray-900 outline-none"
+              />
+              <span className="text-gray-400">—</span>
+              <input
+                type="number"
+                value={priceTo}
+                onChange={(e) => setPriceTo(Number(e.target.value))}
+                placeholder="50000"
+                min={0}
+                className="w-full bg-transparent text-base text-gray-900 outline-none"
+              />
             </div>
           </div>
           <div className="flex items-center px-4 py-3">
@@ -310,4 +336,4 @@ export default function HomeSearch({
       </section>
     </>
   );
-} 
+}
