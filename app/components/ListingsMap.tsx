@@ -48,40 +48,39 @@ export default function ListingsMap({ listings, lang }: Props) {
       }).addTo(map);
 
       mappableListings.forEach((listing) => {
-        // Price label icon (shown on hover via tooltip)
+        // Small circle icon
         const priceIcon = L.divIcon({
           html: `
             <div style="
               background: #0891b2;
-              color: white;
-              font-size: 12px;
-              font-weight: 700;
-              font-family: sans-serif;
-              padding: 4px 8px;
-              border-radius: 100px;
-              border: 2px solid white;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-              white-space: nowrap;
+              width: 14px;
+              height: 14px;
+              border-radius: 50%;
+              border: 2.5px solid white;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
               cursor: pointer;
-            ">₪${listing.price.toLocaleString()}</div>
+            "></div>
           `,
           className: "",
-          iconSize: [80, 28],
-          iconAnchor: [40, 14],
-          popupAnchor: [0, -20],
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+          popupAnchor: [0, -12],
         });
 
         const marker = L.marker([listing.latitude!, listing.longitude!], { icon: priceIcon }).addTo(map);
 
-        // Tooltip on hover (shows price persistently as label)
+        // Tooltip on hover — shows price
         marker.bindTooltip(`
-          <div style="font-family:sans-serif;font-size:12px;color:#0f172a;font-weight:600;">
+          <div style="font-family:sans-serif;font-size:13px;font-weight:700;color:#0891b2;">
+            ₪${listing.price.toLocaleString()}
+          </div>
+          <div style="font-family:sans-serif;font-size:11px;color:#64748b;margin-top:2px;">
             ${listing.title}
           </div>
         `, {
           permanent: false,
           direction: "top",
-          offset: [0, -10],
+          offset: [0, -8],
           opacity: 1,
         });
 
