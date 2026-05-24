@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
-import { useRouter } from "next/navigation";
-
 
 const cities = ["Tel Aviv", "Ramat Gan", "Herzliya", "Givatayim"];
 
@@ -17,9 +16,9 @@ export default function CreateListingClient({ lang }: Props) {
   const t = translations[lang];
   const isHe = lang === "he";
 
-  const supabase = createClient();
-
   const router = useRouter();
+
+  const supabase = createClient();
 
   const [title, setTitle] = useState("");
   const [city, setCity] = useState(cities[0]);
@@ -79,6 +78,32 @@ export default function CreateListingClient({ lang }: Props) {
       return;
     }
 
+    // Geocode the address using OpenStreetMap Nominatim
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    let geocodeWarning = "";
+
+    try {
+      const address = [neighborhood, city, "Israel"].filter(Boolean).join(", ");
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const geoData = await geoRes.json();
+      if (geoData && geoData.length > 0) {
+        latitude = parseFloat(geoData[0].lat);
+        longitude = parseFloat(geoData[0].lon);
+      } else {
+        geocodeWarning = isHe
+          ? "הכתובת לא נמצאה במפה. המודעה תפורסם אך לא תופיע על המפה."
+          : "Address not found on map. Listing will be published but won't appear on the map.";
+      }
+    } catch {
+      geocodeWarning = isHe
+        ? "לא ניתן לאמת את הכתובת. המודעה תפורסם אך לא תופיע על המפה."
+        : "Could not verify address. Listing will be published but won't appear on the map.";
+    }
+
     const { data: listing, error: listingError } = await supabase
       .from("listings")
       .insert({
@@ -90,6 +115,8 @@ export default function CreateListingClient({ lang }: Props) {
         description,
         start_date: startDate,
         end_date: endDate,
+        latitude,
+        longitude,
       })
       .select()
       .single();
@@ -139,7 +166,12 @@ export default function CreateListingClient({ lang }: Props) {
     }
 
     setLoading(false);
-    router.push(`/my-account?lang=${lang}`);
+    if (geocodeWarning) {
+      setFormMessage(geocodeWarning);
+      setTimeout(() => router.push(`/my-account?lang=${lang}`), 3000);
+    } else {
+      router.push(`/my-account?lang=${lang}`);
+    }
     setTitle("");
     setCity(cities[0]);
     setNeighborhood("");
@@ -169,7 +201,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={isHe ? "לדוג׳: סאבלט שמשי ליד דיזנגוף" : "e.g. Sunny sublet near Dizengoff"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                 required
               />
             </div>
@@ -181,7 +213,7 @@ export default function CreateListingClient({ lang }: Props) {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               >
                 {cities.map((cityOption) => (
                   <option key={cityOption} value={cityOption}>
@@ -200,7 +232,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
                 placeholder={isHe ? "לדוג׳: פלורנטין" : "e.g. Florentin"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               />
             </div>
 
@@ -213,7 +245,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder={isHe ? "לדוג׳: 4500" : "e.g. 4500"}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                 required
               />
             </div>
@@ -227,7 +259,7 @@ export default function CreateListingClient({ lang }: Props) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={isHe ? "תאר את הדירה..." : "Describe the apartment..."}
-                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               />
             </div>
 
@@ -240,7 +272,7 @@ export default function CreateListingClient({ lang }: Props) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -253,7 +285,7 @@ export default function CreateListingClient({ lang }: Props) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500"
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -269,7 +301,7 @@ export default function CreateListingClient({ lang }: Props) {
                 accept="image/*"
                 multiple
                 onChange={handleFilesChange}
-                className="block w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:font-semibold file:text-teal-700"
+                className="block w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700"
               />
 
               <p className="mt-2 text-sm text-gray-500">
@@ -313,7 +345,7 @@ export default function CreateListingClient({ lang }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-teal-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-teal-700 disabled:opacity-60"
+              className="rounded-full bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
             >
               {loading
                 ? isHe ? "יוצר מודעה..." : "Creating..."

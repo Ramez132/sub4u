@@ -4,6 +4,7 @@ import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
 import StartConversationButton from "@/app/components/StartConversationButton";
 import ListingGallery from "@/app/components/ListingGallery";
+import SingleListingMap from "@/app/components/SingleListingMap";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -107,7 +108,7 @@ export default async function ListingPage(props: PageProps) {
             {/* Title + location */}
             <div className="mb-6">
               {listing.is_boosted && (
-                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-600">
+                <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
                   ⚡ {isHe ? "ממומן" : "Featured"}
                 </span>
               )}
@@ -148,6 +149,21 @@ export default async function ListingPage(props: PageProps) {
                 <p className="leading-relaxed text-gray-600">{description}</p>
               </div>
             )}
+
+            {/* Map */}
+            {listing.latitude && listing.longitude && (
+              <div className="mb-6">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">
+                  {isHe ? "מיקום" : "Location"}
+                </h2>
+                <SingleListingMap
+                  latitude={listing.latitude}
+                  longitude={listing.longitude}
+                  title={listing.title}
+                  lang={lang}
+                />
+              </div>
+            )}
           </div>
 
           {/* Right: price card + CTA */}
@@ -179,7 +195,7 @@ export default async function ListingPage(props: PageProps) {
                   {existingConversationId ? (
                     <a
                       href={`/inbox/${existingConversationId}?lang=${lang}`}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -195,14 +211,14 @@ export default async function ListingPage(props: PageProps) {
               {!user && (
                 <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center text-sm text-gray-500">
                   {isHe ? "התחבר כדי לשלוח הודעה" : "Sign in to message the renter"}{" "}
-                  <a href={`/sign-in?lang=${lang}&mode=signin`} className="font-semibold text-teal-600 hover:underline">
+                  <a href={`/sign-in?lang=${lang}&mode=signin`} className="font-semibold text-blue-600 hover:underline">
                     {isHe ? "התחברות" : "Sign in"}
                   </a>
                 </div>
               )}
 
               {isOwner && (
-                <div className="rounded-2xl bg-orange-50 px-4 py-3 text-center text-sm font-medium text-teal-600">
+                <div className="rounded-2xl bg-orange-50 px-4 py-3 text-center text-sm font-medium text-blue-600">
                   {isHe ? "זו המודעה שלך" : "This is your listing"}
                 </div>
               )}
