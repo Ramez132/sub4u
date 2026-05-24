@@ -77,7 +77,7 @@ export default function ListingsMap({ listings, lang }: Props) {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl border border-gray-200 shadow-sm" style={{ height: "420px" }}>
+    <div className="relative w-full overflow-hidden rounded-3xl border border-gray-200 shadow-sm" style={{ height: "420px", zIndex: 0 }}>
       <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
       {mappableListings.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">

@@ -56,7 +56,7 @@ export default function SingleListingMap({ latitude, longitude, title, lang }: P
   }, [latitude, longitude]);
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 shadow-sm" style={{ height: "260px" }}>
+    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 shadow-sm" style={{ height: "260px", zIndex: 0 }}>
       <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
     </div>
   );
