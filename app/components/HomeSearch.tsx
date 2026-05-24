@@ -210,8 +210,8 @@ export default function HomeSearch({
       >
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
-          <div className="h-11 w-11" />
-          <p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
+          <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Sub4U</h1>
+<p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
           <button
             type="button"
             onClick={() => document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth" })}
