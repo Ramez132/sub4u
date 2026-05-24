@@ -2,6 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import { translations, type Language } from "@/lib/translations";
+import dynamic from "next/dynamic";
+
+const ListingsMap = dynamic(() => import("@/app/components/ListingsMap"), { ssr: false });
 
 type Listing = {
   id: number;
@@ -205,7 +208,7 @@ export default function HomeSearch({
         className="relative h-[70vh] min-h-[500px] w-full bg-cover bg-center"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80')" }}
       >
-        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-[#0e4a52]/65" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
           <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Sub4U</h1>
           <p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>
@@ -248,9 +251,15 @@ export default function HomeSearch({
         </div>
       </section>
 
-     
-
       <section ref={resultsRef} id="results-section" className="mx-auto max-w-7xl px-4 py-12">
+
+        {/* Map */}
+        <div className="mb-12">
+          <h2 className="mb-4 text-2xl font-bold text-gray-900">
+            {isHe ? "מפת המודעות" : "Listings map"}
+          </h2>
+          <ListingsMap listings={initialListings} lang={lang} />
+        </div>
 
         {/* Featured section */}
         {!filtersApplied && boostedListings.length > 0 && (
