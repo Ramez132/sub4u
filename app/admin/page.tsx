@@ -9,31 +9,31 @@ export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const userEmail = user?.email ?? user?.user_metadata?.email ?? "";
   if (!user || user.id !== ADMIN_ID) {
-  redirect("/");
-}
+    redirect("/");
+  }
 
-  // Fetch stats
-  const [
-    { count: totalUsers },
-    { count: totalListings },
-    { count: activeListings },
-    { count: rentedListings },
-    { count: totalConversations },
-    { count: totalMessages },
-    { data: listings },
-    { data: profiles },
-  ] = await Promise.all([
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
-    supabase.from("listings").select("*", { count: "exact", head: true }),
-    supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "rented"),
-    supabase.from("conversations").select("*", { count: "exact", head: true }),
-    supabase.from("messages").select("*", { count: "exact", head: true }),
-    supabase.from("listings").select("*, profiles(full_name, email)").order("created_at", { ascending: false }),
-    supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-  ]);
+  const { data: listings } = await supabase
+    .from("listings")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const { count: totalConversations } = await supabase
+    .from("conversations")
+    .select("*", { count: "exact", head: true });
+
+  const { count: totalMessages } = await supabase
+    .from("messages")
+    .select("*", { count: "exact", head: true });
+
+  const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]));
+  const activeListings = (listings ?? []).filter((l) => l.status !== "rented").length;
+  const rentedListings = (listings ?? []).filter((l) => l.status === "rented").length;
 
   async function deleteListing(formData: FormData) {
     "use server";
@@ -52,10 +52,10 @@ export default async function AdminPage() {
   }
 
   const stats = [
-    { label: "Total Users", value: totalUsers ?? 0, color: "bg-blue-50 text-blue-700" },
-    { label: "Total Listings", value: totalListings ?? 0, color: "bg-teal-50 text-teal-700" },
-    { label: "Active Listings", value: activeListings ?? 0, color: "bg-green-50 text-green-700" },
-    { label: "Rented Listings", value: rentedListings ?? 0, color: "bg-gray-50 text-gray-700" },
+    { label: "Total Users", value: (profiles ?? []).length, color: "bg-blue-50 text-blue-700" },
+    { label: "Total Listings", value: (listings ?? []).length, color: "bg-teal-50 text-teal-700" },
+    { label: "Active", value: activeListings, color: "bg-green-50 text-green-700" },
+    { label: "Rented", value: rentedListings, color: "bg-gray-50 text-gray-700" },
     { label: "Conversations", value: totalConversations ?? 0, color: "bg-purple-50 text-purple-700" },
     { label: "Messages", value: totalMessages ?? 0, color: "bg-orange-50 text-orange-700" },
   ];
@@ -63,7 +63,6 @@ export default async function AdminPage() {
   return (
     <>
       <PageHeader title="Admin Dashboard" lang="en" backHref="/" />
-
       <main className="min-h-screen bg-gray-50 px-4 py-8">
         <div className="mx-auto max-w-6xl space-y-8">
 
@@ -95,11 +94,11 @@ export default async function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {(listings ?? []).map((listing) => {
-                    const owner = (Array.isArray(listing.profiles) ? listing.profiles[0] : listing.profiles) as { full_name: string; email: string } | null;
+                    const owner = listing.user_id ? profileMap[listing.user_id] : null;
                     return (
                       <tr key={listing.id} className="hover:bg-gray-50">
                         <td className="py-3 pr-4 text-gray-400">#{listing.id}</td>
-                        <td className="py-3 pr-4 font-medium text-gray-900 max-w-[200px] truncate">{listing.title}</td>
+                        <td className="py-3 pr-4 font-medium text-gray-900 max-w-[180px] truncate">{listing.title}</td>
                         <td className="py-3 pr-4 text-gray-500 text-xs">{owner?.email ?? "-"}</td>
                         <td className="py-3 pr-4 text-gray-600">{listing.city}</td>
                         <td className="py-3 pr-4 font-semibold text-teal-600">₪{listing.price?.toLocaleString()}</td>
@@ -120,8 +119,7 @@ export default async function AdminPage() {
                             </a>
                             <form action={deleteListing}>
                               <input type="hidden" name="listingId" value={listing.id} />
-                              <button type="submit"
-                                className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
+                              <button type="submit" className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
                                 Delete
                               </button>
                             </form>
@@ -166,9 +164,7 @@ export default async function AdminPage() {
                         {profile.id !== ADMIN_ID && (
                           <form action={deleteUser}>
                             <input type="hidden" name="userId" value={profile.id} />
-                            <button type="submit"
-                              className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100"
-                              onClick={(e) => { if (!confirm("Delete this user?")) e.preventDefault(); }}>
+                            <button type="submit" className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
                               Delete
                             </button>
                           </form>
