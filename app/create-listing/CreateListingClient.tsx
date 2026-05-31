@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
+import { useRouter } from "next/navigation";
 
 const cities = ["Tel Aviv", "Ramat Gan", "Herzliya", "Givatayim"];
 
@@ -14,6 +15,8 @@ type Props = {
 export default function CreateListingClient({ lang }: Props) {
   const t = translations[lang];
   const isHe = lang === "he";
+
+  const router = useRouter();
 
   const supabase = createClient();
 
