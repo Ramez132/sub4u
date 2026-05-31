@@ -44,7 +44,13 @@ export default function HandymenMap({ handymen, lang, onSelect }: Props) {
     import("leaflet").then((L) => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
 
-      const map = L.map(containerRef.current!, { center: DEFAULT_CENTER, zoom: 12, dragging: true });
+      const map = L.map(containerRef.current!, {
+  center: DEFAULT_CENTER,
+  zoom: 12,
+  dragging: true,
+  scrollWheelZoom: true,
+  zoomControl: true,
+});
       mapRef.current = map;
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -93,7 +99,7 @@ export default function HandymenMap({ handymen, lang, onSelect }: Props) {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl border border-gray-200 shadow-sm" style={{ height: "380px", zIndex: 0 }}>
+    <div className="relative w-full overflow-hidden rounded-3xl border border-gray-200 shadow-sm" style={{ height: "420px", zIndex: 0 }}>
       <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
       {mappable.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
