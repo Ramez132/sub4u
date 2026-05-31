@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import PageHeader from "@/app/components/PageHeader";
 import DeleteUserModal from "@/app/components/DeleteUserModal";
+import AddHandymanForm from "@/app/components/AddHandymanForm";
 
 const ADMIN_ID = "ec1ad54f-66cf-4ee0-b8d6-14b7107725e5";
 
@@ -205,8 +206,74 @@ export default async function AdminPage() {
             </section>
           )}
 
+          {/* Handymen */}
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Handymen</h2>
+              <AddHandymanForm />
+            </div>
+            <HandymenList />
+          </section>
+
         </div>
       </main>
     </>
+  );
+}
+
+async function HandymenList() {
+  const supabase = await createClient();
+  const { data: handymen } = await supabase.from("handymen").select("*").order("created_at", { ascending: false });
+
+  async function deleteHandyman(formData: FormData) {
+    "use server";
+    const supabase = await createClient();
+    await supabase.from("handymen").delete().eq("id", formData.get("handymanId") as string);
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/admin");
+  }
+
+  if (!handymen || handymen.length === 0) {
+    return <p className="text-sm text-gray-400">No handymen added yet. Click "+ Add Handyman" to get started.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <th className="pb-3 pr-4">Name</th>
+            <th className="pb-3 pr-4">Profession</th>
+            <th className="pb-3 pr-4">City</th>
+            <th className="pb-3 pr-4">Phone</th>
+            <th className="pb-3">Action</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {handymen.map((h) => (
+            <tr key={h.id} className="hover:bg-gray-50">
+              <td className="py-3 pr-4 font-medium text-gray-900">{h.name}</td>
+              <td className="py-3 pr-4 text-gray-600">{h.profession}</td>
+              <td className="py-3 pr-4 text-gray-500">{h.city}</td>
+              <td className="py-3 pr-4 text-gray-500">{h.phone}</td>
+              <td className="py-3">
+                <div className="flex gap-2">
+                  <a href={`/handymen/${h.id}`} target="_blank"
+                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                    View
+                  </a>
+                  <form action={deleteHandyman}>
+                    <input type="hidden" name="handymanId" value={h.id} />
+                    <button type="submit" className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

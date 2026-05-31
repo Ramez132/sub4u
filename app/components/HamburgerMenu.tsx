@@ -102,7 +102,23 @@ export default function HamburgerMenu({
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {user ? (
             <>
-              
+              {/* Inbox */}
+              <a href={`/inbox?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
+                <span className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </span>
+                {isHe ? "תיבת הודעות" : "Inbox"}
+                {unreadCount > 0 && (
+                  <span className="ml-auto rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700">{unreadCount}</span>
+                )}
+              </a>
 
               <a href={`/my-account?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -117,6 +133,11 @@ export default function HamburgerMenu({
               <a href={`/about?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 {isHe ? "אודות" : "About"}
+              </a>
+
+              <a href={`/handymen?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                {isHe ? "בעלי מקצוע" : "Handymen"}
               </a>
 
               <a href={`/contact?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
@@ -134,6 +155,11 @@ export default function HamburgerMenu({
               <a href={`/about?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 {isHe ? "אודות" : "About"}
+              </a>
+
+              <a href={`/handymen?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                {isHe ? "בעלי מקצוע" : "Handymen"}
               </a>
 
               <a href={`/contact?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass}>
