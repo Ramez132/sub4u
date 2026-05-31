@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import PageHeader from "@/app/components/PageHeader";
+import DeleteUserModal from "@/app/components/DeleteUserModal";
 
 const ADMIN_ID = "ec1ad54f-66cf-4ee0-b8d6-14b7107725e5";
 
@@ -23,6 +24,11 @@ export default async function AdminPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  const { data: deletedUsers } = await supabase
+    .from("deleted_users")
+    .select("*")
+    .order("deleted_at", { ascending: false });
+
   const { count: totalConversations } = await supabase
     .from("conversations")
     .select("*", { count: "exact", head: true });
@@ -40,14 +46,6 @@ export default async function AdminPage() {
     const supabase = await createClient();
     const listingId = Number(formData.get("listingId"));
     await supabase.from("listings").delete().eq("id", listingId);
-    revalidatePath("/admin");
-  }
-
-  async function deleteUser(formData: FormData) {
-    "use server";
-    const supabase = await createClient();
-    const userId = formData.get("userId") as string;
-    await supabase.from("profiles").delete().eq("id", userId);
     revalidatePath("/admin");
   }
 
@@ -104,9 +102,7 @@ export default async function AdminPage() {
                         <td className="py-3 pr-4 font-semibold text-teal-600">₪{listing.price?.toLocaleString()}</td>
                         <td className="py-3 pr-4">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            listing.status === "rented"
-                              ? "bg-gray-100 text-gray-500"
-                              : "bg-green-100 text-green-700"
+                            listing.status === "rented" ? "bg-gray-100 text-gray-500" : "bg-green-100 text-green-700"
                           }`}>
                             {listing.status ?? "active"}
                           </span>
@@ -162,12 +158,11 @@ export default async function AdminPage() {
                       </td>
                       <td className="py-3">
                         {profile.id !== ADMIN_ID && (
-                          <form action={deleteUser}>
-                            <input type="hidden" name="userId" value={profile.id} />
-                            <button type="submit" className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
-                              Delete
-                            </button>
-                          </form>
+                          <DeleteUserModal
+                            userId={profile.id}
+                            userName={profile.full_name || ""}
+                            userEmail={profile.email || ""}
+                          />
                         )}
                       </td>
                     </tr>
@@ -176,6 +171,39 @@ export default async function AdminPage() {
               </table>
             </div>
           </section>
+
+          {/* Deleted Users */}
+          {(deletedUsers ?? []).length > 0 && (
+            <section className="rounded-3xl border border-red-100 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 text-xl font-bold text-gray-900">Deleted Users</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      <th className="pb-3 pr-4">Name</th>
+                      <th className="pb-3 pr-4">Email</th>
+                      <th className="pb-3 pr-4">Phone</th>
+                      <th className="pb-3 pr-4">Reason</th>
+                      <th className="pb-3">Deleted At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {(deletedUsers ?? []).map((du) => (
+                      <tr key={du.id} className="hover:bg-gray-50">
+                        <td className="py-3 pr-4 text-gray-700">{du.full_name || "-"}</td>
+                        <td className="py-3 pr-4 text-gray-500">{du.email}</td>
+                        <td className="py-3 pr-4 text-gray-500">{du.phone_number || "-"}</td>
+                        <td className="py-3 pr-4 text-gray-500 max-w-[200px] truncate">{du.reason}</td>
+                        <td className="py-3 text-gray-400 text-xs">
+                          {new Date(du.deleted_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
         </div>
       </main>
