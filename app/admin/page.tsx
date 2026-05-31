@@ -3,17 +3,16 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import PageHeader from "@/app/components/PageHeader";
 
-const ADMIN_EMAIL = "subletforu@gmail.com";
+const ADMIN_ID = "ec1ad54f-66cf-4ee0-b8d6-14b7107725e5";
 
 export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const userEmail = user?.email ?? user?.user_metadata?.email ?? "";
-  if (!user || userEmail !== ADMIN_EMAIL) 
-  {
-      redirect("/");
-  }
+  if (!user || user.id !== ADMIN_ID) {
+  redirect("/");
+}
 
   // Fetch stats
   const [
@@ -153,7 +152,7 @@ export default async function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {(profiles ?? []).map((profile) => (
-                    <tr key={profile.id} className={`hover:bg-gray-50 ${profile.email === ADMIN_EMAIL ? "opacity-50" : ""}`}>
+                    <tr key={profile.id} className={`hover:bg-gray-50 ${profile.id === ADMIN_ID ? "opacity-40" : ""}`}>
                       <td className="py-3 pr-4 font-medium text-gray-900">{profile.full_name || "-"}</td>
                       <td className="py-3 pr-4 text-gray-500">{profile.email}</td>
                       <td className="py-3 pr-4 text-gray-500">{profile.phone_number || "-"}</td>
@@ -165,7 +164,7 @@ export default async function AdminPage() {
                         )}
                       </td>
                       <td className="py-3">
-                        {profile.email !== ADMIN_EMAIL && (
+                        {profile.id !== ADMIN_ID && (
                           <form action={deleteUser}>
                             <input type="hidden" name="userId" value={profile.id} />
                             <button type="submit"
