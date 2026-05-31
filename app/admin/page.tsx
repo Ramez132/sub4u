@@ -121,8 +121,7 @@ export default async function AdminPage() {
                             <form action={deleteListing}>
                               <input type="hidden" name="listingId" value={listing.id} />
                               <button type="submit"
-                                className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100"
-                                onClick={(e) => { if (!confirm("Delete this listing?")) e.preventDefault(); }}>
+                                className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-100">
                                 Delete
                               </button>
                             </form>
