@@ -158,18 +158,45 @@ export default async function ListingPage(props: PageProps) {
                   {isHe ? "כלי תחבורה כלולים" : "Included transportation"}
                 </h2>
                 <div className="flex flex-wrap gap-3">
-                  {listing.transportation.map((item: string) => {
+                  {listing.transportation.map((item: { value: string; free: boolean; price: string }) => {
                     const map: Record<string, { emoji: string; en: string; he: string }> = {
                       bicycle: { emoji: "🚲", en: "Bicycle", he: "אופניים" },
                       car: { emoji: "🚗", en: "Car", he: "אוטו" },
                       scooter: { emoji: "🛴", en: "Scooter", he: "קורקינט" },
                     };
-                    const t = map[item];
+                    const t = map[item.value];
                     if (!t) return null;
+
+                    // Calculate monthly price if span > 1 month
+                    let priceDisplay = "";
+                    if (!item.free && item.price) {
+                      const start = new Date(listing.start_date);
+                      const end = new Date(listing.end_date);
+                      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                      const totalPrice = Number(item.price);
+
+                      if (days > 30) {
+                        const months = days / 30;
+                        const perMonth = Math.round(totalPrice / months);
+                        priceDisplay = isHe ? `₪${perMonth.toLocaleString()} לחודש` : `₪${perMonth.toLocaleString()} / month`;
+                      } else {
+                        priceDisplay = `₪${totalPrice.toLocaleString()}`;
+                      }
+                    }
+
                     return (
-                      <div key={item} className="flex items-center gap-2 rounded-2xl border-2 border-teal-100 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700">
+                      <div key={item.value} className="flex items-center gap-2 rounded-2xl border-2 border-teal-100 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700">
                         <span className="text-xl">{t.emoji}</span>
-                        {isHe ? t.he : t.en}
+                        <span>{isHe ? t.he : t.en}</span>
+                        {item.free ? (
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                            {isHe ? "חינם ✓" : "Free ✓"}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-800">
+                            {priceDisplay}
+                          </span>
+                        )}
                       </div>
                     );
                   })}

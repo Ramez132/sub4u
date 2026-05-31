@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
-import { useRouter } from "next/navigation";
 
 const cities = ["Tel Aviv", "Ramat Gan", "Herzliya", "Givatayim"];
 
@@ -15,7 +14,6 @@ type Props = {
 export default function CreateListingClient({ lang }: Props) {
   const t = translations[lang];
   const isHe = lang === "he";
-  const router = useRouter();
 
   const supabase = createClient();
 
@@ -24,7 +22,7 @@ export default function CreateListingClient({ lang }: Props) {
   const [neighborhood, setNeighborhood] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [transportation, setTransportation] = useState<string[]>([]);
+  const [transportation, setTransportation] = useState<{ value: string; free: boolean; price: string }[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -269,38 +267,72 @@ export default function CreateListingClient({ lang }: Props) {
               <label className="mb-3 block text-sm font-medium text-gray-700">
                 {isHe ? "כלי תחבורה כלולים" : "Included transportation"}
               </label>
-              <div className="flex flex-wrap gap-3">
+              <div className="space-y-3">
                 {[
                   { value: "bicycle", emoji: "🚲", en: "Bicycle", he: "אופניים" },
                   { value: "car", emoji: "🚗", en: "Car", he: "אוטו" },
                   { value: "scooter", emoji: "🛴", en: "Scooter", he: "קורקינט" },
                 ].map((item) => {
-                  const checked = transportation.includes(item.value);
+                  const existing = transportation.find((t) => t.value === item.value);
+                  const checked = !!existing;
                   return (
-                    <label
-                      key={item.value}
-                      className={`flex cursor-pointer items-center gap-2 rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
-                        checked
-                          ? "border-teal-500 bg-teal-50 text-teal-700"
-                          : "border-gray-200 bg-white text-gray-600 hover:border-teal-200"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="hidden"
-                        checked={checked}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setTransportation((prev) => [...prev, item.value]);
-                          } else {
-                            setTransportation((prev) => prev.filter((v) => v !== item.value));
-                          }
-                        }}
-                      />
-                      <span className="text-xl">{item.emoji}</span>
-                      {isHe ? item.he : item.en}
-                      {checked && <span className="ml-1 text-teal-500">✓</span>}
-                    </label>
+                    <div key={item.value} className={`rounded-2xl border-2 transition-all ${checked ? "border-teal-500 bg-teal-50" : "border-gray-200 bg-white"}`}>
+                      {/* Checkbox row */}
+                      <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-teal-600"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setTransportation((prev) => [...prev, { value: item.value, free: true, price: "" }]);
+                            } else {
+                              setTransportation((prev) => prev.filter((t) => t.value !== item.value));
+                            }
+                          }}
+                        />
+                        <span className="text-2xl">{item.emoji}</span>
+                        <span className="font-semibold text-gray-800">{isHe ? item.he : item.en}</span>
+                      </label>
+
+                      {/* Pricing options — shown when checked */}
+                      {checked && (
+                        <div className="border-t border-teal-100 px-4 pb-4 pt-3">
+                          <div className="flex gap-3 mb-3">
+                            <button
+                              type="button"
+                              onClick={() => setTransportation((prev) => prev.map((t) => t.value === item.value ? { ...t, free: true, price: "" } : t))}
+                              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${existing?.free ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                            >
+                              {isHe ? "✓ חינם" : "✓ Free"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTransportation((prev) => prev.map((t) => t.value === item.value ? { ...t, free: false } : t))}
+                              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${!existing?.free ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                            >
+                              {isHe ? "₪ בתשלום" : "₪ Paid"}
+                            </button>
+                          </div>
+
+                          {!existing?.free && (
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500">
+                                {isHe ? "מחיר לכל תקופת הסאבלט (₪)" : "Total price for the entire sublet period (₪)"}
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={existing?.price ?? ""}
+                                onChange={(e) => setTransportation((prev) => prev.map((t) => t.value === item.value ? { ...t, price: e.target.value } : t))}
+                                placeholder={isHe ? "לדוג׳: 200" : "e.g. 200"}
+                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-teal-500"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
