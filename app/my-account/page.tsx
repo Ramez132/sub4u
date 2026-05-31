@@ -45,6 +45,23 @@ export default async function MyAccountPage(props: PageProps) {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  async function toggleStatus(formData: FormData) {
+    "use server";
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/sign-in");
+    const listingId = Number(formData.get("listingId"));
+    const currentStatus = formData.get("currentStatus") as string;
+    const newStatus = currentStatus === "active" ? "rented" : "active";
+    await supabase
+      .from("listings")
+      .update({ status: newStatus })
+      .eq("id", listingId)
+      .eq("user_id", user.id);
+    revalidatePath("/my-account");
+    revalidatePath("/");
+  }
+
   async function boostListing(formData: FormData) {
     "use server";
     const supabase = await createClient();
@@ -172,6 +189,11 @@ export default async function MyAccountPage(props: PageProps) {
                               {isHe ? "ממומן 🚀" : "Boosted 🚀"}
                             </span>
                           )}
+                          {listing.status === "rented" && (
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
+                              {isHe ? "הושכר ✓" : "Rented ✓"}
+                            </span>
+                          )}
                         </div>
                         <p className="mt-0.5 text-sm text-gray-500">
                           {listing.city}{listing.neighborhood ? ` · ${listing.neighborhood}` : ""}
@@ -190,6 +212,21 @@ export default async function MyAccountPage(props: PageProps) {
                         className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
                         {isHe ? "ערוך" : "Edit"}
                       </a>
+                      {/* Mark as Rented / Active */}
+                      <form action={toggleStatus}>
+                        <input type="hidden" name="listingId" value={listing.id} />
+                        <input type="hidden" name="currentStatus" value={listing.status ?? "active"} />
+                        <button type="submit"
+                          className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                            listing.status === "rented"
+                              ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              : "bg-green-600 text-white hover:bg-green-700"
+                          }`}>
+                          {listing.status === "rented"
+                            ? (isHe ? "סמן כפנוי" : "Mark as Active")
+                            : (isHe ? "סמן כמושכר" : "Mark as Rented")}
+                        </button>
+                      </form>
                       <form action={boostListing}>
                         <input type="hidden" name="listingId" value={listing.id} />
                         <button type="submit" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">

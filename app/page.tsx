@@ -53,6 +53,7 @@ export default async function Home({
   const { data: listings, error } = await supabase
     .from("listings")
     .select("*")
+    .eq("status", "active")
     .order("created_at", { ascending: false });
 
   const filteredListings = (listings ?? []).map((l) => ({
