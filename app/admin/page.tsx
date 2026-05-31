@@ -9,8 +9,10 @@ export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.email !== ADMIN_EMAIL) {
-    redirect("/");
+  const userEmail = user?.email ?? user?.user_metadata?.email ?? "";
+  if (!user || userEmail !== ADMIN_EMAIL) 
+  {
+      redirect("/");
   }
 
   // Fetch stats
