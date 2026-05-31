@@ -2,9 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import PageHeader from "@/app/components/PageHeader";
 import { type Language } from "@/lib/translations";
-import dynamic from "next/dynamic";
+import SingleListingMap from "@/app/components/SingleListingMap";
 
-const SingleListingMap = dynamic(() => import("@/app/components/SingleListingMap"), { ssr: false });
 
 const professions = [
   { value: "electrician", emoji: "⚡", en: "Electrician", he: "חשמלאי" },
