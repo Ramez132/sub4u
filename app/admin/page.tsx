@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import PageHeader from "@/app/components/PageHeader";
 
-const ADMIN_EMAIL = "ramez132@gmail.com";
+const ADMIN_EMAIL = "subletforu@gmail.com";
 
 export default async function AdminPage() {
   const supabase = await createClient();
