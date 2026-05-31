@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PageHeader from "@/app/components/PageHeader";
 import { translations, type Language } from "@/lib/translations";
+import { useRouter } from "next/navigation";
 
 const cities = ["Tel Aviv", "Ramat Gan", "Herzliya", "Givatayim"];
 
@@ -15,7 +15,6 @@ type Props = {
 export default function CreateListingClient({ lang }: Props) {
   const t = translations[lang];
   const isHe = lang === "he";
-
   const router = useRouter();
 
   const supabase = createClient();
@@ -25,6 +24,7 @@ export default function CreateListingClient({ lang }: Props) {
   const [neighborhood, setNeighborhood] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [transportation, setTransportation] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -117,6 +117,7 @@ export default function CreateListingClient({ lang }: Props) {
         end_date: endDate,
         latitude,
         longitude,
+        transportation,
       })
       .select()
       .single();
@@ -180,6 +181,7 @@ export default function CreateListingClient({ lang }: Props) {
     setStartDate("");
     setEndDate("");
     setSelectedFiles([]);
+    setTransportation([]);
   }
 
   return (
@@ -261,6 +263,47 @@ export default function CreateListingClient({ lang }: Props) {
                 placeholder={isHe ? "תאר את הדירה..." : "Describe the apartment..."}
                 className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="mb-3 block text-sm font-medium text-gray-700">
+                {isHe ? "כלי תחבורה כלולים" : "Included transportation"}
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { value: "bicycle", emoji: "🚲", en: "Bicycle", he: "אופניים" },
+                  { value: "car", emoji: "🚗", en: "Car", he: "אוטו" },
+                  { value: "scooter", emoji: "🛴", en: "Scooter", he: "קורקינט" },
+                ].map((item) => {
+                  const checked = transportation.includes(item.value);
+                  return (
+                    <label
+                      key={item.value}
+                      className={`flex cursor-pointer items-center gap-2 rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                        checked
+                          ? "border-teal-500 bg-teal-50 text-teal-700"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-teal-200"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={checked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTransportation((prev) => [...prev, item.value]);
+                          } else {
+                            setTransportation((prev) => prev.filter((v) => v !== item.value));
+                          }
+                        }}
+                      />
+                      <span className="text-xl">{item.emoji}</span>
+                      {isHe ? item.he : item.en}
+                      {checked && <span className="ml-1 text-teal-500">✓</span>}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">

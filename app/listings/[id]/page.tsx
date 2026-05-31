@@ -151,6 +151,32 @@ export default async function ListingPage(props: PageProps) {
               </div>
             )}
 
+            {/* Transportation */}
+            {listing.transportation && listing.transportation.length > 0 && (
+              <div className="mb-6">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">
+                  {isHe ? "כלי תחבורה כלולים" : "Included transportation"}
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  {listing.transportation.map((item: string) => {
+                    const map: Record<string, { emoji: string; en: string; he: string }> = {
+                      bicycle: { emoji: "🚲", en: "Bicycle", he: "אופניים" },
+                      car: { emoji: "🚗", en: "Car", he: "אוטו" },
+                      scooter: { emoji: "🛴", en: "Scooter", he: "קורקינט" },
+                    };
+                    const t = map[item];
+                    if (!t) return null;
+                    return (
+                      <div key={item} className="flex items-center gap-2 rounded-2xl border-2 border-teal-100 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700">
+                        <span className="text-xl">{t.emoji}</span>
+                        {isHe ? t.he : t.en}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Map */}
             {listing.latitude && listing.longitude && (
               <div className="mb-6">
