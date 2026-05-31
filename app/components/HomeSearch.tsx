@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { translations, type Language } from "@/lib/translations";
 import dynamic from "next/dynamic";
+import FavoriteButton from "@/app/components/FavoriteButton";
 
 const ListingsMap = dynamic(() => import("@/app/components/ListingsMap"), { ssr: false });
 
@@ -145,9 +146,12 @@ function ListingCard({ listing, images, lang, t }: { listing: Listing; images: s
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-2 flex items-start justify-between gap-4">
           <h3 className="text-xl font-semibold text-gray-900">{listing.title}</h3>
-          <span className="whitespace-nowrap rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
-            ₪{listing.price.toLocaleString()}
-          </span>
+          <div className="flex items-center gap-2">
+            <FavoriteButton listingId={listing.id} lang={lang} />
+            <span className="whitespace-nowrap rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
+              ₪{listing.price.toLocaleString()}
+            </span>
+          </div>
         </div>
         <p className="text-sm text-gray-600">{listing.city}</p>
         <p className="mb-2 text-sm text-gray-500">{listing.neighborhood}</p>
@@ -211,7 +215,7 @@ export default function HomeSearch({
         className="relative h-[70vh] min-h-[500px] w-full bg-cover bg-center"
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80')" }}
       >
-        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-[#0e4a52]/65" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
           <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl">Sub4U</h1>
           <p className="mt-5 max-w-2xl text-lg text-white/90 md:text-2xl">{t.slogan}</p>

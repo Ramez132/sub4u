@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { translations, type Language } from "@/lib/translations";
 import DeleteListingButton from "@/app/components/DeleteListingButton";
 import ContractButton from "@/app/components/ContractButton";
+import FavoriteButton from "@/app/components/FavoriteButton";
 
 function maskIdNumber(idNumber: string) {
   if (!idNumber) return "";
@@ -35,6 +36,12 @@ export default async function MyAccountPage(props: PageProps) {
   const { data: listings } = await supabase
     .from("listings")
     .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const { data: favorites } = await supabase
+    .from("favorites")
+    .select("listing_id, listings(*)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -110,6 +117,40 @@ export default async function MyAccountPage(props: PageProps) {
               userId={user.id}
               contractSignedAt={profile?.contract_signed_at ?? null}
             />
+          </section>
+
+          {/* Favorites */}
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-6 text-2xl font-semibold text-gray-900">
+              {isHe ? "מודעות שמורות ❤️" : "Saved listings ❤️"}
+            </h2>
+            {favorites && favorites.length > 0 ? (
+              <div className="space-y-4">
+                {favorites.map((fav) => {
+                  const listing = (Array.isArray(fav.listings) ? fav.listings[0] : fav.listings) as any;
+                  if (!listing) return null;
+                  return (
+                    <div key={fav.listing_id} className="flex items-center justify-between rounded-2xl border border-gray-200 px-5 py-4 transition hover:bg-gray-50">
+                      <div>
+                        <p className="font-semibold text-gray-900">{listing.title}</p>
+                        <p className="text-sm text-gray-500">{listing.city}{listing.neighborhood ? ` · ${listing.neighborhood}` : ""}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-teal-600">₪{listing.price?.toLocaleString()}</span>
+                        <a href={`/listings/${listing.id}?lang=${lang}`} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+                          {isHe ? "צפה" : "View"}
+                        </a>
+                        <FavoriteButton listingId={listing.id} lang={lang} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">
+                {isHe ? "לא שמרת מודעות עדיין." : "You haven't saved any listings yet."}
+              </p>
+            )}
           </section>
 
           {/* My listings */}

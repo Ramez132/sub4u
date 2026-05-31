@@ -5,6 +5,7 @@ import { translations, type Language } from "@/lib/translations";
 import StartConversationButton from "@/app/components/StartConversationButton";
 import ListingGallery from "@/app/components/ListingGallery";
 import SingleListingMap from "@/app/components/SingleListingMap";
+import FavoriteButton from "@/app/components/FavoriteButton";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -173,6 +174,12 @@ export default async function ListingPage(props: PageProps) {
                 <span className="text-4xl font-bold text-gray-900">₪{listing.price.toLocaleString()}</span>
                 <span className="ml-1 text-sm text-gray-400">{isHe ? "/ חודש" : "/ month"}</span>
               </div>
+
+              {!isOwner && (
+                <div className="mb-4 flex justify-center">
+                  <FavoriteButton listingId={listing.id} lang={lang} />
+                </div>
+              )}
 
               <hr className="mb-4 border-gray-100" />
 
